@@ -1,0 +1,4 @@
+# Compiled binaries and object files
+*.exe
+*.o
+*.obj
