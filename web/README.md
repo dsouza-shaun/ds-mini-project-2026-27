@@ -2,8 +2,7 @@
 
 Same Data Structure Visualizer, but the drawing happens in the browser.
 The C program stays a normal console program: you build the structures with
-menus and `scanf`, and the page shows every step, the matching C function and
-the exact source line that produced it.
+menus and `scanf`, and the page shows every step.
 
 ## Run it
 
@@ -36,47 +35,7 @@ pushes it to the page immediately, which plays the steps.
 | Play | play again from the first step |
 | Continue | keep playing from the current step |
 
-`Auto-play` is on by default, so a new operation starts playing by itself.
-Untick it to step through every operation by hand. `Speed` changes playback
-between 0.5x and 3x.
-
-Keyboard: `←` / `→` step, `space` plays or pauses, `c` shows or hides the code.
-
-## Debugger and code
-
-Below the drawing there is a debugger panel:
-
-- the current state: `idle`, `running`, `paused` or `done`,
-- the C function that produced the step (`push`, `search`, `bfs`, ...),
-- the source line number,
-- the full function from `visualizer.c`, with the active line highlighted and
-  scrolled into view.
-
-The page reads `visualizer.c` from the same folder, so the code view only works
-when the page is opened through `serve.py` (not with `file://`).
-
-Each step in the trace stores `"fn"` and `"line"` alongside `"msg"` and
-`"state"`. The C code fills them in with the `save_bst`, `save_stack`,
-`save_queue`, `save_cq`, `save_sll`, `save_dll` and `save_graph` helpers, which
-wrap `__func__` and `__LINE__`.
-
-## Animations
-
-- the drawing fades and lifts in on every step,
-- nodes pop in when they are added or visited,
-- edges draw themselves,
-- the current node gets a pulsing halo,
-- pushed and enqueued values pop into their slot,
-- popped and dequeued values float away as a ghost,
-- inserted list nodes pop in, deleted list nodes float away,
-- the graph shows BFS/DFS order and the queue or stack it is using.
-
-The page remembers the previous operation's final state and animates from it
-when the new state is the old state with one item added or removed. That makes
-pushes, pops and deletes animate even though each operation writes a new trace.
-
-All motion is disabled automatically when the operating system asks for reduced
-motion.
+Keyboard: `←` and `→` step, `space` plays or pauses.
 
 ## Structures
 
@@ -91,7 +50,7 @@ motion.
 | File | Purpose |
 |---|---|
 | `visualizer.c` | all structures, menus and the trace writer |
-| `viewer.html` | page, SVG drawings, debugger and playback |
+| `viewer.html` | page, SVG drawings and playback |
 | `serve.py` | local server, build and browser launcher |
 | `trace.json` | generated after every operation (ignored by git) |
 
@@ -108,5 +67,3 @@ as the tab regains focus.
 - Node types are separate: `Node` for the tree, `LNode` for the singly linked
   list, `DNode` for the doubly linked list.
 - `SIZE` (10) is the capacity for the stack and both queues.
-- Graph BFS/DFS reuse the normal queue and stack code, but set `tracing = 0`
-  so those internal calls do not add stack/queue steps to the graph trace.

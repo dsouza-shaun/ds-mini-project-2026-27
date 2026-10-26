@@ -10,7 +10,6 @@
 
 FILE *out = NULL;
 int first_step = 1;
-int tracing = 1;
 
 void begin(char *mode, char *title)
 {
@@ -35,32 +34,19 @@ void end_trace(void)
     out = NULL;
 }
 
-void start_step(char *msg, const char *fn, int line)
+void start_step(char *msg)
 {
-    if (out == NULL)
-        return;
-
     if (first_step == 0)
         fprintf(out, ",");
 
     first_step = 0;
-    fprintf(out, "{\"msg\":\"%s\",\"fn\":\"%s\",\"line\":%d,\"state\":\"", msg, fn, line);
+    fprintf(out, "{\"msg\":\"%s\",\"state\":\"", msg);
 }
 
 void end_step(void)
 {
     fprintf(out, "\"}");
 }
-
-/* Each step records the function and line that produced it, so the page can
-   open the same C code and point at the step. */
-#define save_bst(root, msg) save_bst_at(root, msg, __func__, __LINE__)
-#define save_stack(p, msg) save_stack_at(p, msg, __func__, __LINE__)
-#define save_queue(p, msg) save_queue_at(p, msg, __func__, __LINE__)
-#define save_cq(msg) save_cq_at(msg, __func__, __LINE__)
-#define save_sll(head, msg) save_sll_at(head, msg, __func__, __LINE__)
-#define save_dll(head, msg) save_dll_at(head, msg, __func__, __LINE__)
-#define save_graph(msg) save_graph_at(msg, __func__, __LINE__)
 
 /* ================================================================ */
 /*                      binary search tree                          */
@@ -91,12 +77,12 @@ void write_tree(Node *p)
     fprintf(out, ")");
 }
 
-void save_bst_at(Node *root, char *msg, const char *fn, int line)
+void save_bst(Node *root, char *msg)
 {
     if (out == NULL)
         return;
 
-    start_step(msg, fn, line);
+    start_step(msg);
     write_tree(root);
     end_step();
 }
@@ -379,50 +365,28 @@ typedef struct
 
 Stack st = {{0}, -1};
 
-void save_stack_at(Stack *p, char *msg, const char *fn, int line)
-{
-    int i;
-
-    if (out == NULL || tracing == 0)
-        return;
-
-    start_step(msg, fn, line);
-
-    for (i = 0; i <= p->top; i++)
-        fprintf(out, "%d ", p->arr[i]);
-
-    end_step();
-}
-
 void push(Stack *p, int ele)
 {
     if (p->top == SIZE - 1)
     {
         printf("Stack Overflow\n");
-        save_stack(p, "Stack is full, nothing pushed.");
-        return;
     }
-
-    p->top++;
-    p->arr[p->top] = ele;
-    save_stack(p, "Value pushed on top.");
+    else
+    {
+        p->top++;
+        p->arr[p->top] = ele;
+    }
 }
 
 int pop(Stack *p)
 {
-    int x;
-
     if (p->top == -1)
     {
         printf("Stack Underflow\n");
-        save_stack(p, "Stack is empty, nothing popped.");
         return -1;
     }
 
-    x = p->arr[p->top];
-    p->top--;
-    save_stack(p, "Value removed from the top.");
-    return x;
+    return p->arr[p->top--];
 }
 
 int peek(Stack *p)
@@ -432,7 +396,33 @@ int peek(Stack *p)
 
 int stack_isEmpty(Stack *p)
 {
-    return p->top == -1;
+    if (p->top == -1)
+        return 1;
+
+    return 0;
+}
+
+int stack_isFull(Stack *p)
+{
+    if (p->top == SIZE - 1)
+        return 1;
+
+    return 0;
+}
+
+void save_stack(Stack *p, char *msg)
+{
+    int i;
+
+    if (out == NULL)
+        return;
+
+    start_step(msg);
+
+    for (i = 0; i <= p->top; i++)
+        fprintf(out, "%d ", p->arr[i]);
+
+    end_step();
 }
 
 /* ================================================================ */
@@ -448,15 +438,73 @@ typedef struct
 
 Queue q = {{0}, -1, -1};
 
-void save_queue_at(Queue *p, char *msg, const char *fn, int line)
+void enqueue(Queue *p, int ele)
+{
+    if (p->r == SIZE - 1)
+    {
+        printf("Queue Overflow\n");
+    }
+    else if (p->f == -1 && p->r == -1)
+    {
+        p->f = p->r = 0;
+        p->a[p->r] = ele;
+    }
+    else
+    {
+        p->r++;
+        p->a[p->r] = ele;
+    }
+}
+
+int dequeue(Queue *p)
+{
+    int x;
+
+    if (p->f == -1 && p->r == -1)
+    {
+        printf("Queue Underflow\n");
+        return -1;
+    }
+
+    x = p->a[p->f];
+
+    if (p->f == p->r)
+    {
+        p->f = p->r = -1;
+    }
+    else
+    {
+        p->f++;
+    }
+
+    return x;
+}
+
+int queue_isEmpty(Queue *p)
+{
+    if (p->f == -1 && p->r == -1)
+        return 1;
+
+    return 0;
+}
+
+int queue_isFull(Queue *p)
+{
+    if (p->r == SIZE - 1)
+        return 1;
+
+    return 0;
+}
+
+void save_queue(Queue *p, char *msg)
 {
     int i;
     int inside;
 
-    if (out == NULL || tracing == 0)
+    if (out == NULL)
         return;
 
-    start_step(msg, fn, line);
+    start_step(msg);
 
     fprintf(out, "%d %d", p->f, p->r);
 
@@ -476,56 +524,6 @@ void save_queue_at(Queue *p, char *msg, const char *fn, int line)
     end_step();
 }
 
-void enqueue(Queue *p, int ele)
-{
-    if (p->r == SIZE - 1)
-    {
-        printf("Queue Overflow\n");
-        save_queue(p, "Queue is full, nothing added.");
-        return;
-    }
-
-    if (p->f == -1)
-        p->f = p->r = 0;
-    else
-        p->r++;
-
-    p->a[p->r] = ele;
-    save_queue(p, "Value added at the rear.");
-}
-
-int dequeue(Queue *p)
-{
-    int x;
-
-    if (p->f == -1)
-    {
-        printf("Queue Underflow\n");
-        save_queue(p, "Queue is empty, nothing removed.");
-        return -1;
-    }
-
-    x = p->a[p->f];
-
-    if (p->f == p->r)
-        p->f = p->r = -1;
-    else
-        p->f++;
-
-    save_queue(p, "Value removed from the front.");
-    return x;
-}
-
-int queue_isEmpty(Queue *p)
-{
-    return p->f == -1;
-}
-
-int queue_isFull(Queue *p)
-{
-    return p->r == SIZE - 1;
-}
-
 /* ================================================================ */
 /*                        circular queue                            */
 /* ================================================================ */
@@ -534,25 +532,88 @@ int cq[SIZE];
 int cq_front = -1;
 int cq_rear = -1;
 
+void cq_enqueue(int ele)
+{
+    if (cq_front == (cq_rear + 1) % SIZE)
+    {
+        printf("Queue Overflow\n");
+        return;
+    }
+    else if (cq_front == -1 && cq_rear == -1)
+    {
+        cq_front = cq_rear = 0;
+    }
+    else
+    {
+        cq_rear = (cq_rear + 1) % SIZE;
+    }
+
+    cq[cq_rear] = ele;
+}
+
+int cq_dequeue(void)
+{
+    int x;
+
+    if (cq_front == -1 && cq_rear == -1)
+    {
+        printf("Queue Underflow\n");
+        return -1;
+    }
+
+    x = cq[cq_front];
+
+    if (cq_front == cq_rear)
+        cq_front = cq_rear = -1;
+    else
+        cq_front = (cq_front + 1) % SIZE;
+
+    return x;
+}
+
+int cq_isEmpty(void)
+{
+    if (cq_front == -1 && cq_rear == -1)
+        return 1;
+
+    return 0;
+}
+
+int cq_isFull(void)
+{
+    if (cq_front == (cq_rear + 1) % SIZE)
+        return 1;
+
+    return 0;
+}
+
 int cq_inside(int i)
 {
     if (cq_front == -1 && cq_rear == -1)
         return 0;
 
     if (cq_front <= cq_rear)
-        return i >= cq_front && i <= cq_rear;
+    {
+        if (i >= cq_front && i <= cq_rear)
+            return 1;
+    }
+    else
+    {
+        if (i >= cq_front || i <= cq_rear)
+            return 1;
+    }
 
-    return i >= cq_front || i <= cq_rear;
+    return 0;
 }
 
-void save_cq_at(char *msg, const char *fn, int line)
+void save_cq(char *msg)
 {
     int i;
 
     if (out == NULL)
         return;
 
-    start_step(msg, fn, line);
+    start_step(msg);
 
     fprintf(out, "%d %d", cq_front, cq_rear);
 
@@ -565,56 +626,6 @@ void save_cq_at(char *msg, const char *fn, int line)
     }
 
     end_step();
-}
-
-void cq_enqueue(int ele)
-{
-    if (cq_front == (cq_rear + 1) % SIZE)
-    {
-        printf("Queue Overflow\n");
-        save_cq("Queue is full, nothing added.");
-        return;
-    }
-
-    if (cq_front == -1)
-        cq_front = cq_rear = 0;
-    else
-        cq_rear = (cq_rear + 1) % SIZE;
-
-    cq[cq_rear] = ele;
-    save_cq("Value added at the rear.");
-}
-
-int cq_dequeue(void)
-{
-    int x;
-
-    if (cq_front == -1)
-    {
-        printf("Queue Underflow\n");
-        save_cq("Queue is empty, nothing removed.");
-        return -1;
-    }
-
-    x = cq[cq_front];
-
-    if (cq_front == cq_rear)
-        cq_front = cq_rear = -1;
-    else
-        cq_front = (cq_front + 1) % SIZE;
-
-    save_cq("Value removed from the front.");
-    return x;
-}
-
-int cq_isEmpty(void)
-{
-    return cq_front == -1;
-}
-
-int cq_isFull(void)
-{
-    return cq_front == (cq_rear + 1) % SIZE;
 }
 
 /* ================================================================ */
@@ -644,14 +655,14 @@ LNode *sll_create_node(void)
     return newnode;
 }
 
-void save_sll_at(LNode *head, char *msg, const char *fn, int line)
+void save_sll(LNode *head, char *msg)
 {
     LNode *p;
 
     if (out == NULL)
         return;
 
-    start_step(msg, fn, line);
+    start_step(msg);
 
     for (p = head; p != NULL; p = p->next)
         fprintf(out, "%d%s ", p->data, p == sll_cur ? "*" : "");
@@ -720,7 +731,6 @@ LNode *sll_insert_pos(LNode *head, int pos)
     if (pos < 1)
     {
         printf("Invalid position\n");
-        save_sll(head, "Invalid position, nothing inserted.");
         return head;
     }
 
@@ -730,7 +740,6 @@ LNode *sll_insert_pos(LNode *head, int pos)
     if (head == NULL)
     {
         printf("Invalid position\n");
-        save_sll(head, "List is empty, cannot insert there.");
         return head;
     }
 
@@ -746,7 +755,6 @@ LNode *sll_insert_pos(LNode *head, int pos)
     if (i < pos - 1)
     {
         printf("Invalid position\n");
-        save_sll(head, "Invalid position, nothing inserted.");
         return head;
     }
 
@@ -768,7 +776,6 @@ LNode *sll_delete_front(LNode *head)
     if (head == NULL)
     {
         printf("List is empty\n");
-        save_sll(head, "List is empty, nothing deleted.");
         return head;
     }
 
@@ -788,7 +795,6 @@ LNode *sll_delete_last(LNode *head)
     if (head == NULL)
     {
         printf("List is empty\n");
-        save_sll(head, "List is empty, nothing deleted.");
         return head;
     }
 
@@ -834,7 +840,6 @@ LNode *sll_delete_pos(int pos, LNode *head)
     if (pos < 1 || pos > count)
     {
         printf("Invalid position\n");
-        save_sll(head, "Invalid position, nothing deleted.");
         return head;
     }
 
@@ -912,14 +917,14 @@ DNode *dll_create_node(void)
     return newnode;
 }
 
-void save_dll_at(DNode *head, char *msg, const char *fn, int line)
+void save_dll(DNode *head, char *msg)
 {
     DNode *p;
 
     if (out == NULL)
         return;
 
-    start_step(msg, fn, line);
+    start_step(msg);
 
     for (p = head; p != NULL; p = p->next)
         fprintf(out, "%d%s ", p->data, p == dll_cur ? "*" : "");
@@ -988,19 +993,13 @@ DNode *dll_insert_pos(DNode *head, int pos)
     int i = 1;
 
     if (pos <= 0)
-    {
-        save_dll(head, "Invalid position, nothing inserted.");
         return head;
-    }
 
     if (pos == 1)
         return dll_insert_begin(head);
 
     if (head == NULL)
-    {
-        save_dll(head, "List is empty, cannot insert there.");
         return head;
-    }
 
     tmp = head;
 
@@ -1013,10 +1012,7 @@ DNode *dll_insert_pos(DNode *head, int pos)
     }
 
     if (i != pos - 1)
-    {
-        save_dll(head, "Invalid position, nothing inserted.");
         return head;
-    }
 
     newnode = dll_create_node();
     newnode->prev = tmp;
@@ -1041,7 +1037,6 @@ DNode *dll_delete_first(DNode *head)
     if (head == NULL)
     {
         printf("List is empty\n");
-        save_dll(head, "List is empty, nothing deleted.");
         return head;
     }
 
@@ -1067,7 +1062,6 @@ DNode *dll_delete_last(DNode *head)
     if (head == NULL)
     {
         printf("List is empty\n");
-        save_dll(head, "List is empty, nothing deleted.");
         return head;
     }
 
@@ -1092,10 +1086,7 @@ DNode *dll_delete_pos(DNode *head, int pos)
     int i = 1;
 
     if (head == NULL || pos <= 0)
-    {
-        save_dll(head, "List is empty or the position is invalid.");
         return head;
-    }
 
     if (pos == 1)
         return dll_delete_first(head);
@@ -1109,10 +1100,7 @@ DNode *dll_delete_pos(DNode *head, int pos)
     }
 
     if (tmp == NULL)
-    {
-        save_dll(head, "Invalid position, nothing deleted.");
         return head;
-    }
 
     if (tmp->next != NULL)
         tmp->next->prev = tmp->prev;
@@ -1193,14 +1181,14 @@ int gaux = 0; /* 0 = none, 1 = queue, 2 = stack */
 Queue gq = {{0}, -1, -1};
 Stack gs = {{0}, -1};
 
-void save_graph_at(char *msg, const char *fn, int line)
+void save_graph(char *msg)
 {
     int i, j;
 
     if (out == NULL)
         return;
 
-    start_step(msg, fn, line);
+    start_step(msg);
 
     fprintf(out, "%d;", gn);
 
@@ -1250,7 +1238,6 @@ void add_edge(int u, int v)
     {
         gadj[u][v] = 1;
         gadj[v][u] = 1;
-        save_graph("Edge added.");
     }
 }
 
@@ -1283,7 +1270,6 @@ void bfs(int start)
     gpath_n = 0;
     gaux = 1;
     gcur = -1;
-    tracing = 0;
 
     enqueue(&gq, start);
     gvis[start] = 1;
@@ -1310,7 +1296,6 @@ void bfs(int start)
 
     gcur = -1;
     save_graph("BFS complete.");
-    tracing = 1;
     gaux = 0;
 }
 
@@ -1325,7 +1310,6 @@ void dfs(int start)
     gpath_n = 0;
     gaux = 2;
     gcur = -1;
-    tracing = 0;
 
     push(&gs, start);
     gvis[start] = 1;
@@ -1370,7 +1354,6 @@ void dfs(int start)
 
     gcur = -1;
     save_graph("DFS complete.");
-    tracing = 1;
     gaux = 0;
 }
 
@@ -1384,11 +1367,17 @@ void bst_menu(void)
 
     while (1)
     {
-        printf("\n--- BINARY SEARCH TREE ---\n"
-               "1. Insert   2. Search   3. Delete\n"
-               "4. Inorder  5. Preorder 6. Postorder\n"
-               "7. Count    8. Clear    9. Back\n"
-               "Enter choice: ");
+        printf("\n--- BINARY SEARCH TREE ---\n");
+        printf("1. Insert\n");
+        printf("2. Search\n");
+        printf("3. Delete\n");
+        printf("4. Inorder\n");
+        printf("5. Preorder\n");
+        printf("6. Postorder\n");
+        printf("7. Count nodes\n");
+        printf("8. Clear\n");
+        printf("9. Back\n");
+        printf("Enter choice: ");
 
         if (scanf("%d", &ch) != 1)
             return;
@@ -1407,7 +1396,11 @@ void bst_menu(void)
             break;
 
         case 2:
-            if (bst == NULL) { printf("Tree is empty\n"); break; }
+            if (bst == NULL)
+            {
+                printf("Tree is empty\n");
+                break;
+            }
 
             printf("Enter element to search: ");
             scanf("%d", &key);
@@ -1422,7 +1415,11 @@ void bst_menu(void)
             break;
 
         case 3:
-            if (bst == NULL) { printf("Tree is empty\n"); break; }
+            if (bst == NULL)
+            {
+                printf("Tree is empty\n");
+                break;
+            }
 
             printf("Enter element to delete: ");
             scanf("%d", &key);
@@ -1432,7 +1429,11 @@ void bst_menu(void)
             break;
 
         case 4:
-            if (bst == NULL) { printf("Tree is empty\n"); break; }
+            if (bst == NULL)
+            {
+                printf("Tree is empty\n");
+                break;
+            }
 
             begin("bst", "Inorder");
             inorder(bst);
@@ -1441,7 +1442,11 @@ void bst_menu(void)
             break;
 
         case 5:
-            if (bst == NULL) { printf("Tree is empty\n"); break; }
+            if (bst == NULL)
+            {
+                printf("Tree is empty\n");
+                break;
+            }
 
             begin("bst", "Preorder");
             preorder(bst);
@@ -1450,7 +1455,11 @@ void bst_menu(void)
             break;
 
         case 6:
-            if (bst == NULL) { printf("Tree is empty\n"); break; }
+            if (bst == NULL)
+            {
+                printf("Tree is empty\n");
+                break;
+            }
 
             begin("bst", "Postorder");
             postorder(bst);
@@ -1484,9 +1493,13 @@ void stack_menu(void)
 
     while (1)
     {
-        printf("\n--- STACK ---\n"
-               "1. Push  2. Pop  3. Peek  4. Clear  5. Back\n"
-               "Enter choice: ");
+        printf("\n--- STACK ---\n");
+        printf("1. Push\n");
+        printf("2. Pop\n");
+        printf("3. Peek\n");
+        printf("4. Clear\n");
+        printf("5. Back\n");
+        printf("Enter choice: ");
 
         if (scanf("%d", &ch) != 1)
             return;
@@ -1498,15 +1511,18 @@ void stack_menu(void)
             scanf("%d", &ele);
             begin("stack", "Push");
             push(&st, ele);
+            save_stack(&st, "Value pushed on top.");
             end_trace();
             break;
 
         case 2:
             begin("stack", "Pop");
             x = pop(&st);
+            save_stack(&st, "Value removed from the top.");
             end_trace();
 
-            if (x != -1) printf("Deleted element = %d\n", x);
+            if (x != -1)
+                printf("Deleted element = %d\n", x);
             break;
 
         case 3:
@@ -1538,10 +1554,14 @@ void simple_queue_menu(void)
 
     while (1)
     {
-        printf("\n--- SIMPLE QUEUE ---\n"
-               "1. Enqueue  2. Dequeue  3. Is Empty\n"
-               "4. Is Full  5. Clear    6. Back\n"
-               "Enter choice: ");
+        printf("\n--- SIMPLE QUEUE ---\n");
+        printf("1. Enqueue\n");
+        printf("2. Dequeue\n");
+        printf("3. Is Empty\n");
+        printf("4. Is Full\n");
+        printf("5. Clear\n");
+        printf("6. Back\n");
+        printf("Enter choice: ");
 
         if (scanf("%d", &ch) != 1)
             return;
@@ -1553,23 +1573,32 @@ void simple_queue_menu(void)
             scanf("%d", &ele);
             begin("queue", "Enqueue");
             enqueue(&q, ele);
+            save_queue(&q, "Value added at the rear.");
             end_trace();
             break;
 
         case 2:
             begin("queue", "Dequeue");
             x = dequeue(&q);
+            save_queue(&q, "Value removed from the front.");
             end_trace();
 
-            if (x != -1) printf("Deleted element = %d\n", x);
+            if (x != -1)
+                printf("Deleted element = %d\n", x);
             break;
 
         case 3:
-            printf("Queue is %sempty\n", queue_isEmpty(&q) ? "" : "not ");
+            if (queue_isEmpty(&q))
+                printf("Queue is empty\n");
+            else
+                printf("Queue is not empty\n");
             break;
 
         case 4:
-            printf("Queue is %sfull\n", queue_isFull(&q) ? "" : "not ");
+            if (queue_isFull(&q))
+                printf("Queue is full\n");
+            else
+                printf("Queue is not full\n");
             break;
 
         case 5:
@@ -1594,10 +1623,14 @@ void circular_queue_menu(void)
 
     while (1)
     {
-        printf("\n--- CIRCULAR QUEUE ---\n"
-               "1. Enqueue  2. Dequeue  3. Is Empty\n"
-               "4. Is Full  5. Clear    6. Back\n"
-               "Enter choice: ");
+        printf("\n--- CIRCULAR QUEUE ---\n");
+        printf("1. Enqueue\n");
+        printf("2. Dequeue\n");
+        printf("3. Is Empty\n");
+        printf("4. Is Full\n");
+        printf("5. Clear\n");
+        printf("6. Back\n");
+        printf("Enter choice: ");
 
         if (scanf("%d", &ch) != 1)
             return;
@@ -1609,23 +1642,32 @@ void circular_queue_menu(void)
             scanf("%d", &ele);
             begin("circular", "Enqueue");
             cq_enqueue(ele);
+            save_cq("Value added at the rear.");
             end_trace();
             break;
 
         case 2:
             begin("circular", "Dequeue");
             x = cq_dequeue();
+            save_cq("Value removed from the front.");
             end_trace();
 
-            if (x != -1) printf("Deleted element = %d\n", x);
+            if (x != -1)
+                printf("Deleted element = %d\n", x);
             break;
 
         case 3:
-            printf("Queue is %sempty\n", cq_isEmpty() ? "" : "not ");
+            if (cq_isEmpty())
+                printf("Queue is empty\n");
+            else
+                printf("Queue is not empty\n");
             break;
 
         case 4:
-            printf("Queue is %sfull\n", cq_isFull() ? "" : "not ");
+            if (cq_isFull())
+                printf("Queue is full\n");
+            else
+                printf("Queue is not full\n");
             break;
 
         case 5:
@@ -1650,9 +1692,11 @@ void queue_menu(void)
 
     while (1)
     {
-        printf("\n--- QUEUE ---\n"
-               "1. Simple Queue  2. Circular Queue  3. Back\n"
-               "Enter choice: ");
+        printf("\n--- QUEUE ---\n");
+        printf("1. Simple Queue\n");
+        printf("2. Circular Queue\n");
+        printf("3. Back\n");
+        printf("Enter choice: ");
 
         if (scanf("%d", &ch) != 1)
             return;
@@ -1674,11 +1718,17 @@ void singly_menu(void)
 
     while (1)
     {
-        printf("\n--- SINGLY LINKED LIST ---\n"
-               "1. Insert front  2. Insert end   3. Insert position\n"
-               "4. Delete front  5. Delete last  6. Delete position\n"
-               "7. Count         8. Clear        9. Back\n"
-               "Enter choice: ");
+        printf("\n--- SINGLY LINKED LIST ---\n");
+        printf("1. Insert at front\n");
+        printf("2. Insert at end\n");
+        printf("3. Insert at position\n");
+        printf("4. Delete front\n");
+        printf("5. Delete last\n");
+        printf("6. Delete at position\n");
+        printf("7. Count\n");
+        printf("8. Clear\n");
+        printf("9. Back\n");
+        printf("Enter choice: ");
 
         if (scanf("%d", &ch) != 1)
             return;
@@ -1752,11 +1802,18 @@ void doubly_menu(void)
 
     while (1)
     {
-        printf("\n--- DOUBLY LINKED LIST ---\n"
-               "1. Insert begin  2. Insert end   3. Insert position\n"
-               "4. Delete first  5. Delete last  6. Delete position\n"
-               "7. Forward       8. Backward      9. Clear   10. Back\n"
-               "Enter choice: ");
+        printf("\n--- DOUBLY LINKED LIST ---\n");
+        printf("1. Insert at beginning\n");
+        printf("2. Insert at end\n");
+        printf("3. Insert at position\n");
+        printf("4. Delete first\n");
+        printf("5. Delete last\n");
+        printf("6. Delete at position\n");
+        printf("7. Traverse forward\n");
+        printf("8. Traverse backward\n");
+        printf("9. Clear\n");
+        printf("10. Back\n");
+        printf("Enter choice: ");
 
         if (scanf("%d", &ch) != 1)
             return;
@@ -1836,9 +1893,11 @@ void list_menu(void)
 
     while (1)
     {
-        printf("\n--- LINKED LIST ---\n"
-               "1. Singly  2. Doubly  3. Back\n"
-               "Enter choice: ");
+        printf("\n--- LINKED LIST ---\n");
+        printf("1. Singly Linked List\n");
+        printf("2. Doubly Linked List\n");
+        printf("3. Back\n");
+        printf("Enter choice: ");
 
         if (scanf("%d", &ch) != 1)
             return;
@@ -1860,10 +1919,14 @@ void graph_menu(void)
 
     while (1)
     {
-        printf("\n--- GRAPH ---\n"
-               "1. Set vertices  2. Add edge  3. BFS\n"
-               "4. DFS           5. Clear     6. Back\n"
-               "Enter choice: ");
+        printf("\n--- GRAPH ---\n");
+        printf("1. Set number of vertices\n");
+        printf("2. Add edge\n");
+        printf("3. BFS\n");
+        printf("4. DFS\n");
+        printf("5. Clear edges\n");
+        printf("6. Back\n");
+        printf("Enter choice: ");
 
         if (scanf("%d", &ch) != 1)
             return;
@@ -1896,6 +1959,7 @@ void graph_menu(void)
             {
                 begin("graph", "Add edge");
                 add_edge(u, v);
+                save_graph("Edge added.");
                 end_trace();
                 printf("Edge added\n");
             }
@@ -1963,13 +2027,16 @@ int main(void)
 
     while (1)
     {
-        printf("\n=================================\n"
-               "   DATA STRUCTURE VISUALIZER\n"
-               "=================================\n"
-               "1. Binary Search Tree  2. Graph\n"
-               "3. Stack               4. Queue\n"
-               "5. Linked List         6. Exit\n"
-               "Enter choice: ");
+        printf("\n=================================\n");
+        printf("   DATA STRUCTURE VISUALIZER\n");
+        printf("=================================\n");
+        printf("1. Binary Search Tree\n");
+        printf("2. Graph\n");
+        printf("3. Stack\n");
+        printf("4. Queue\n");
+        printf("5. Linked List\n");
+        printf("6. Exit\n");
+        printf("Enter choice: ");
 
         if (scanf("%d", &ch) != 1)
             break;
@@ -2003,5 +2070,6 @@ int main(void)
             printf("Invalid choice\n");
         }
     }
+
     return 0;
 }
