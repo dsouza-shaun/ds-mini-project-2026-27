@@ -23,8 +23,8 @@ body {
   background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
   min-height: 100vh;
 }
-.app { max-width: 1080px; margin: 0 auto; padding: 28px 20px 40px; }
-header { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+.app { max-width: 1080px; margin: 0 auto; padding: 26px 20px 40px; }
+header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
 .logo {
   width: 46px; height: 46px; border-radius: 13px;
   background: linear-gradient(135deg, #6366f1, #4338ca);
@@ -52,12 +52,24 @@ h2 { margin: 8px 0 0; font-size: 17px; }
 .dot.wait { background: var(--hot); animation: pulse 1.4s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .3; } }
 .stage {
-  min-height: 440px; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; padding: 10px 0 18px;
+  min-height: 400px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 10px 0 16px;
 }
-.stage svg { max-width: 100%; height: auto; max-height: 56vh; display: block; margin: 0 auto; }
+.stage svg {
+  max-width: 100%; height: auto; max-height: 52vh; display: block; margin: 0 auto;
+  animation: stageIn .34s ease-out;
+}
+@keyframes stageIn {
+  from { opacity: 0; transform: translateY(8px) scale(.99); }
+  to { opacity: 1; transform: none; }
+}
 .empty { color: var(--muted); font-size: 14px; padding: 60px 10px; text-align: center; line-height: 1.6; }
-.msg-card { margin-top: 14px; padding: 14px 20px; display: flex; gap: 12px; align-items: baseline; }
+.msg-card {
+  margin-top: 14px; padding: 13px 20px; display: flex; gap: 12px; align-items: baseline;
+  transition: background .3s;
+}
+.msg-card.flash { animation: flash .5s ease-out; }
+@keyframes flash { 0% { background: #fef3c7; } 100% { background: #fff; } }
 .msg-card .tag { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .1em; white-space: nowrap; }
 #msg { margin: 0; font-size: 14px; line-height: 1.45; }
 .controls { margin-top: 14px; padding: 12px 14px 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -67,20 +79,71 @@ button {
   cursor: pointer; transition: .15s;
 }
 button:hover:not(:disabled) { border-color: #c7d2fe; background: #f8faff; }
+button:active:not(:disabled) { transform: translateY(1px); }
 button:disabled { opacity: .4; cursor: not-allowed; }
 button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 button.primary:hover:not(:disabled) { background: #4338ca; border-color: #4338ca; }
+button.tiny { padding: 5px 10px; font-size: 11px; border-radius: 8px; }
 .spacer { flex: 1; }
 .counter { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); padding-right: 4px; }
 .bar { flex-basis: 100%; height: 4px; border-radius: 999px; background: #eef2ff; overflow: hidden; margin: 6px 4px 2px; }
-.bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #818cf8, #4f46e5); transition: width .2s; }
-.hint { margin: 16px 2px 0; font-size: 12px; color: var(--muted); text-align: center; }
+.bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #818cf8, #4f46e5); transition: width .25s; }
+.auto {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+  color: var(--muted); padding: 0 6px; user-select: none;
+}
+.auto input { accent-color: var(--accent); width: 14px; height: 14px; }
+.speed { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.speed select {
+  font: inherit; font-size: 12px; color: var(--ink); background: #fff;
+  border: 1px solid var(--line); border-radius: 8px; padding: 6px 7px;
+}
+.hint { margin: 14px 2px 0; font-size: 12px; color: var(--muted); text-align: center; line-height: 1.7; }
 kbd {
   font: inherit; font-size: 11px; border: 1px solid var(--line);
   border-bottom-width: 2px; border-radius: 5px; padding: 1px 5px; background: #fff;
 }
+
+/* debugger + code */
+.debug-card { margin-top: 14px; padding: 12px 16px 14px; }
+.debug-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.badge.alt { color: #0f766e; background: #ccfbf1; }
+.state {
+  font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
+  padding: 4px 8px; border-radius: 999px; background: #f1f5f9; color: #64748b;
+}
+.state.running { background: #dcfce7; color: #15803d; }
+.state.paused { background: #fef3c7; color: #b45309; }
+.state.done { background: #e0e7ff; color: #4338ca; }
+.where { margin-left: auto; display: flex; align-items: baseline; gap: 8px; font-size: 12px; color: var(--muted); }
+.where b { color: var(--ink); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; }
+.code-wrap { margin-top: 10px; border-radius: 12px; overflow: hidden; background: #0f172a; border: 1px solid #1e293b; }
+.code-wrap.hidden { display: none; }
+.code {
+  position: relative; margin: 0; padding: 10px 0; max-height: 264px; overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 12.5px; line-height: 1.6; color: #e2e8f0; tab-size: 4;
+}
+.code-line { display: flex; white-space: pre; min-height: 20px; }
+.code-no {
+  flex: 0 0 54px; text-align: right; padding-right: 14px;
+  color: #64748b; user-select: none;
+}
+.code-text { flex: 1; padding-right: 18px; }
+.code-line.hit {
+  background: linear-gradient(90deg, rgba(99, 102, 241, .32), rgba(99, 102, 241, .10));
+  box-shadow: inset 3px 0 0 #818cf8;
+}
+.code-line.hit .code-no { color: #c7d2fe; font-weight: 700; }
+.code-line.hit .code-text { color: #ffffff; }
+.code-note { padding: 2px 0 2px 68px; color: #64748b; font-style: italic; }
+.code-msg { padding: 24px 20px; color: #94a3b8; font-size: 12.5px; text-align: center; }
+
+/* svg animations */
 .draw text { font-family: inherit; }
 .edge { stroke: #cbd5e1; stroke-width: 2; }
+.edge-anim { stroke-dasharray: 600; stroke-dashoffset: 600; animation: draw .55s ease-out forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
 .node-ring { fill: #fff; stroke: #6366f1; stroke-width: 2; }
 .node-hot { fill: #fef3c7; stroke: #f59e0b; stroke-width: 3; }
 .node-visited { fill: #c7d2fe; stroke: #4f46e5; stroke-width: 2; }
@@ -94,9 +157,46 @@ kbd {
 .box-label { font-size: 15px; font-weight: 700; fill: #1e293b; text-anchor: middle; dominant-baseline: central; }
 .marker { font-size: 11px; font-weight: 800; text-anchor: middle; }
 .arrow { stroke: #94a3b8; stroke-width: 2; fill: none; }
-.info { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; font-size: 12px; color: var(--muted); padding: 2px 10px 4px; }
+.info { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; font-size: 12px; color: var(--muted); padding: 2px 10px 4px; animation: stageIn .34s ease-out; }
 .chip { background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; }
 .chip b { color: var(--ink); font-weight: 600; }
+.pop { transform-box: fill-box; transform-origin: center; animation: pop .4s cubic-bezier(.2, .9, .3, 1.35); }
+@keyframes pop {
+  0% { opacity: 0; transform: scale(.55); }
+  70% { transform: scale(1.07); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.halo {
+  fill: none; stroke: #f59e0b; stroke-width: 2.5;
+  transform-box: fill-box; transform-origin: center;
+  animation: halo 1.15s ease-out infinite;
+}
+@keyframes halo {
+  0% { transform: scale(1); opacity: .7; }
+  100% { transform: scale(1.75); opacity: 0; }
+}
+.ghost { transform-box: fill-box; transform-origin: center; animation: ghostUp .7s ease-out forwards; pointer-events: none; }
+.ghost-left { animation-name: ghostLeft; }
+@keyframes ghostUp {
+  0% { opacity: .9; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-34px) scale(.85); }
+}
+@keyframes ghostLeft {
+  0% { opacity: .9; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(-40px) scale(.85); }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+  .ghost, .halo { display: none !important; }
+}
+@media (max-width: 620px) {
+  .app { padding: 18px 12px 30px; }
+  .stage-card, .debug-card { padding-left: 14px; padding-right: 14px; }
+  .stage { min-height: 320px; }
+  .where { width: 100%; margin-left: 0; }
+  .code { font-size: 11.5px; }
+  .code-no { flex-basis: 42px; }
+}
 </style>
 </head>
 <body>
@@ -105,7 +205,7 @@ kbd {
     <div class="logo">DS</div>
     <div>
       <h1>Data Structure Visualizer</h1>
-      <p>Watch your C structures, one step at a time.</p>
+      <p>Watch the structure and the C code behind every step.</p>
     </div>
   </header>
 
@@ -125,7 +225,7 @@ kbd {
     </div>
   </section>
 
-  <section class="card msg-card">
+  <section class="card msg-card" aria-live="polite">
     <span class="tag">STEP</span>
     <p id="msg">Nothing to show yet.</p>
   </section>
@@ -136,15 +236,43 @@ kbd {
     <button id="play" class="primary" title="Play from the beginning">&#9654; Play</button>
     <button id="cont" title="Continue from the current step">Continue</button>
     <button id="next" title="Next step">Next &#9654;</button>
+    <label class="auto" title="Turn off to step through by hand">
+      <input type="checkbox" id="autoplay" checked> Auto-play
+    </label>
+    <label class="speed">Speed
+      <select id="speed" title="Playback speed">
+        <option value="0.5">0.5&times;</option>
+        <option value="1" selected>1&times;</option>
+        <option value="1.5">1.5&times;</option>
+        <option value="2">2&times;</option>
+        <option value="3">3&times;</option>
+      </select>
+    </label>
     <span class="spacer"></span>
     <span id="counter" class="counter">0 / 0</span>
     <div class="bar"><i id="bar"></i></div>
   </section>
 
+  <section class="card debug-card">
+    <div class="debug-head">
+      <span class="badge alt">DEBUGGER</span>
+      <span id="dbgState" class="state">idle</span>
+      <span class="where">
+        <b id="fnName">&mdash;</b>
+        <span id="lineNo">line &mdash;</span>
+      </span>
+      <button id="codeToggle" class="tiny" aria-expanded="true" aria-controls="codeWrap">Hide code</button>
+    </div>
+    <div id="codeWrap" class="code-wrap">
+      <pre id="code" class="code" tabindex="0" aria-label="C source code for the current step"></pre>
+    </div>
+  </section>
+
   <p class="hint">
     <kbd>&larr;</kbd> <kbd>&rarr;</kbd> to step &nbsp;&middot;&nbsp;
     <kbd>space</kbd> to play or pause &nbsp;&middot;&nbsp;
-    new operations start playing automatically
+    <kbd>c</kbd> to show or hide the code<br>
+    untick <b>Auto-play</b> to step through every operation by hand
   </p>
 </div>
 
@@ -157,11 +285,20 @@ var stage = document.getElementById("stage");
 var modeBadge = document.getElementById("mode");
 var titleEl = document.getElementById("title");
 var msgEl = document.getElementById("msg");
+var msgCard = document.querySelector(".msg-card");
 var counterEl = document.getElementById("counter");
 var barEl = document.getElementById("bar");
 var dotEl = document.getElementById("dot");
 var statusEl = document.getElementById("status");
 var playBtn = document.getElementById("play");
+var autoBox = document.getElementById("autoplay");
+var speedSel = document.getElementById("speed");
+var dbgStateEl = document.getElementById("dbgState");
+var fnNameEl = document.getElementById("fnName");
+var lineNoEl = document.getElementById("lineNo");
+var codeEl = document.getElementById("code");
+var codeWrap = document.getElementById("codeWrap");
+var codeToggle = document.getElementById("codeToggle");
 
 var steps = [];
 var idx = 0;
@@ -173,6 +310,11 @@ var lastRaw = "";
 var everLoaded = false;
 var live = false;
 var eventSource = null;
+var speed = 1;
+var autoPlay = true;
+var sourceLines = null;
+var carryState = null;
+var lastFinal = {};
 
 var MODE_NAMES = {
   bst: "Binary search tree",
@@ -221,6 +363,12 @@ function emptyEl(text) {
 function nums(str) {
   var t = (str || "").trim();
   return t ? t.split(/\s+/).map(Number) : [];
+}
+
+/* Single-step operations replace the old snapshot, so there is no previous
+   state to compare with. The title still tells us the value was added. */
+function addingOp() {
+  return /insert|push|enqueue|add/i.test(title);
 }
 
 function parseTree(str) {
@@ -287,22 +435,93 @@ function parseGraph(str) {
   var p = str.split(";");
   var n = parseInt(p[0], 10) || 0;
   var matrix = [];
-  var i, j;
+  var i;
   for (i = 0; i < n; i++) {
     var row = (p[1 + i] || "").trim();
     matrix.push(row ? row.split(/\s+/).map(Number) : []);
   }
-  var visited = nums(p[1 + n]);
-  var cur = parseInt(p[2 + n], 10);
-  var auxType = (p[3 + n] || "-").trim();
-  var aux = nums(p[4 + n]);
-  var path = nums(p[5 + n]);
-  return { n: n, matrix: matrix, visited: visited, cur: cur, auxType: auxType, aux: aux, path: path };
+  return {
+    n: n,
+    matrix: matrix,
+    visited: nums(p[1 + n]),
+    cur: parseInt(p[2 + n], 10),
+    auxType: (p[3 + n] || "-").trim(),
+    aux: nums(p[4 + n]),
+    path: nums(p[5 + n])
+  };
+}
+
+function isSubsequence(small, big) {
+  var i = 0;
+  for (var j = 0; j < big.length && i < small.length; j++) {
+    if (small[i] === big[j]) i++;
+  }
+  return i === small.length;
+}
+
+function queueValues(state) {
+  var q = parseQueue(state);
+  if (q.f === -1) return [];
+  return q.slots.slice(q.f, q.r + 1);
+}
+
+function circularValues(state) {
+  var q = parseQueue(state);
+  if (q.f === -1) return [];
+  var out = [];
+  var i = q.f;
+  while (true) {
+    out.push(q.slots[i]);
+    if (i === q.r) break;
+    i = (i + 1) % q.slots.length;
+  }
+  return out;
+}
+
+function listValues(state) {
+  return parseList(state).map(function (x) { return x.value; });
+}
+
+/* One operation writes one trace, so the previous snapshot is gone. Keep it
+   around, but only animate from it when the new state is the old state with
+   one item added or removed. That keeps a fresh run from animating stale data. */
+function canCarry(m, before, after) {
+  var a, b;
+  try {
+    if (m === "stack") { a = nums(before); b = nums(after); }
+    else if (m === "queue") { a = queueValues(before); b = queueValues(after); }
+    else if (m === "circular") { a = circularValues(before); b = circularValues(after); }
+    else if (m === "sll" || m === "dll") { a = listValues(before); b = listValues(after); }
+    else return false;
+  } catch (e) {
+    return false;
+  }
+  if (Math.abs(a.length - b.length) !== 1) return false;
+  var small = a.length < b.length ? a : b;
+  var big = a.length < b.length ? b : a;
+  return isSubsequence(small, big);
+}
+
+function dropGhostLater(g) {
+  g.addEventListener("animationend", function () {
+    if (g.parentNode) g.parentNode.removeChild(g);
+  });
+}
+
+function hotValue(tree) {
+  var found = null;
+  (function walk(n) {
+    if (!n) return;
+    if (n.hot) found = n.value;
+    walk(n.left);
+    walk(n.right);
+  })(tree);
+  return found;
 }
 
 /* ------------------------------- tree ------------------------------- */
 
-function drawBST(state) {
+function drawBST(state, prevState) {
   var root;
   try {
     root = parseTree(state);
@@ -310,6 +529,14 @@ function drawBST(state) {
     return { node: emptyEl("Could not read the tree state."), info: [] };
   }
   if (!root) return { node: emptyEl("Tree is empty."), info: [] };
+
+  var before = null;
+  try {
+    before = prevState ? parseTree(prevState) : null;
+  } catch (e) {
+    before = null;
+  }
+  var previousHot = before ? hotValue(before) : null;
 
   var order = 0;
   var maxDepth = 0;
@@ -338,7 +565,7 @@ function drawBST(state) {
       s.appendChild(svgEl("line", {
         x1: px + node.x * cw, y1: py + node.depth * ch,
         x2: px + child.x * cw, y2: py + child.depth * ch,
-        "class": "edge"
+        "class": "edge edge-anim"
       }));
     });
     edges(node.left);
@@ -349,9 +576,19 @@ function drawBST(state) {
     if (!node) return;
     var cx = px + node.x * cw;
     var cy = py + node.depth * ch;
+
+    if (node.hot) {
+      s.appendChild(svgEl("circle", { cx: cx, cy: cy, r: 23, "class": "halo" }));
+    }
+
     var cls = "node-ring" + (node.hot ? " node-hot" : "");
-    s.appendChild(svgEl("circle", { cx: cx, cy: cy, r: 23, "class": cls }));
-    s.appendChild(svgEl("text", { x: cx, y: cy, "class": "node-label" }, String(node.value)));
+    if (node.hot && previousHot !== node.value) cls += " pop";
+
+    var g = svgEl("g");
+    g.appendChild(svgEl("circle", { cx: cx, cy: cy, r: 23, "class": cls }));
+    g.appendChild(svgEl("text", { x: cx, y: cy, "class": "node-label" }, String(node.value)));
+    s.appendChild(g);
+
     nodes(node.left);
     nodes(node.right);
   })(root);
@@ -361,13 +598,32 @@ function drawBST(state) {
 
 /* ------------------------------- lists ------------------------------ */
 
-function drawList(state, doubly) {
+function drawList(state, doubly, prevState) {
   var items = parseList(state);
   if (!items.length) {
     return {
       node: emptyEl(doubly ? "Doubly linked list is empty." : "Singly linked list is empty."),
       info: []
     };
+  }
+
+  var before = prevState ? parseList(prevState) : [];
+  var newAt = -1;
+  if (items.length > before.length) {
+    newAt = items.length - 1;
+    for (var h = 0; h < items.length; h++) {
+      if (items[h].hot) { newAt = h; break; }
+    }
+  }
+
+  var goneAt = -1;
+  var goneValue = null;
+  if (items.length < before.length) {
+    goneAt = 0;
+    for (var d = 0; d < items.length; d++) {
+      if (items[d].value !== before[d].value) { goneAt = d; break; }
+    }
+    goneValue = before[goneAt] ? before[goneAt].value : null;
   }
 
   var bw = 96;
@@ -389,10 +645,21 @@ function drawList(state, doubly) {
 
   items.forEach(function (item, i) {
     var x = px + i * (bw + gap);
-    var cls = "slot" + (item.hot ? " slot-hot" : "");
-    s.appendChild(svgEl("rect", { x: x, y: top, width: bw, height: bh, rx: 10, "class": cls }));
-    s.appendChild(svgEl("text", { x: x + bw / 2, y: top + bh / 2, "class": "box-label" }, String(item.value)));
+    var cls = "slot" + (item.hot ? " slot-hot" : "") + (i === newAt ? " pop" : "");
+    var g = svgEl("g");
+    g.appendChild(svgEl("rect", { x: x, y: top, width: bw, height: bh, rx: 10, "class": cls }));
+    g.appendChild(svgEl("text", { x: x + bw / 2, y: top + bh / 2, "class": "box-label" }, String(item.value)));
+    s.appendChild(g);
   });
+
+  if (goneAt >= 0 && goneValue !== null) {
+    var gx = px + goneAt * (bw + gap);
+    var g = svgEl("g", { "class": "ghost" });
+    g.appendChild(svgEl("rect", { x: gx, y: top, width: bw, height: bh, rx: 10, "class": "slot" }));
+    g.appendChild(svgEl("text", { x: gx + bw / 2, y: top + bh / 2, "class": "box-label" }, String(goneValue)));
+    s.appendChild(g);
+    dropGhostLater(g);
+  }
 
   var laneF = doubly ? my - 10 : my;
   var laneB = my + 10;
@@ -443,8 +710,9 @@ function drawList(state, doubly) {
 
 /* ------------------------------- stack ------------------------------ */
 
-function drawStack(state) {
+function drawStack(state, prevState) {
   var values = nums(state);
+  var before = prevState ? nums(prevState) : null;
   var cap = 10;
   var bw = 150;
   var bh = 38;
@@ -457,13 +725,17 @@ function drawStack(state) {
 
   addArrow(s, "sa", "#4f46e5");
 
+  var grew = before ? values.length === before.length + 1 : addingOp() && values.length > 0;
+  var shrank = before && values.length === before.length - 1;
+
   for (var i = 0; i < cap; i++) {
     var row = cap - 1 - i;
     var y = py + row * (bh + gap);
     var filled = i < values.length;
+    var isNew = grew && i === values.length - 1;
     s.appendChild(svgEl("rect", {
       x: px, y: y, width: bw, height: bh, rx: 8,
-      "class": "slot" + (filled ? " slot-on" : "")
+      "class": "slot" + (filled ? " slot-on" : "") + (isNew ? " pop" : "")
     }));
     s.appendChild(svgEl("text", {
       x: px - 14, y: y + bh / 2,
@@ -471,9 +743,26 @@ function drawStack(state) {
     }, String(i)));
     if (filled) {
       s.appendChild(svgEl("text", {
-        x: px + bw / 2, y: y + bh / 2, "class": "box-label"
+        x: px + bw / 2, y: y + bh / 2,
+        "class": "box-label" + (isNew ? " pop" : "")
       }, String(values[i])));
     }
+  }
+
+  if (shrank && before.length > 0) {
+    var ghostIndex = values.length;
+    var ghostRow = cap - 1 - ghostIndex;
+    var ghostY = py + ghostRow * (bh + gap);
+    var removed = before[before.length - 1];
+    var ghost = svgEl("g", { "class": "ghost" });
+    ghost.appendChild(svgEl("rect", {
+      x: px, y: ghostY, width: bw, height: bh, rx: 8, "class": "slot slot-on"
+    }));
+    ghost.appendChild(svgEl("text", {
+      x: px + bw / 2, y: ghostY + bh / 2, "class": "box-label"
+    }, String(removed)));
+    s.appendChild(ghost);
+    dropGhostLater(ghost);
   }
 
   s.appendChild(svgEl("text", {
@@ -502,8 +791,9 @@ function drawStack(state) {
 
 /* ------------------------------- queues ----------------------------- */
 
-function drawQueue(state) {
+function drawQueue(state, prevState) {
   var q = parseQueue(state);
+  var before = prevState ? parseQueue(prevState) : null;
   var n = q.slots.length || 10;
   var sw = 56;
   var sh = 54;
@@ -516,6 +806,17 @@ function drawQueue(state) {
   var f = q.f;
   var r = q.r;
 
+  function countOf(o) {
+    return o && o.f !== -1 ? o.r - o.f + 1 : 0;
+  }
+
+  var count = countOf(q);
+  var previousCount = before ? countOf(before) : 0;
+  var grew = before ? count === previousCount + 1 : addingOp() && count > 0;
+  var shrank = before && count === previousCount - 1;
+  var newAt = grew ? r : -1;
+  var goneAt = shrank ? before.f : -1;
+
   addArrow(s, "qa", "#10b981");
 
   for (var i = 0; i < n; i++) {
@@ -524,10 +825,12 @@ function drawQueue(state) {
     var cls = "slot" + (on ? " slot-on" : "");
     if (f !== -1 && i === f) cls += " slot-front";
     if (r !== -1 && i === r) cls += " slot-rear";
+    if (i === newAt) cls += " pop";
     s.appendChild(svgEl("rect", { x: x, y: py, width: sw, height: sh, rx: 9, "class": cls }));
     if (on) {
       s.appendChild(svgEl("text", {
-        x: x + sw / 2, y: py + sh / 2, "class": "box-label"
+        x: x + sw / 2, y: py + sh / 2,
+        "class": "box-label" + (i === newAt ? " pop" : "")
       }, String(q.slots[i])));
     }
     s.appendChild(svgEl("text", {
@@ -548,7 +851,19 @@ function drawQueue(state) {
     }
   }
 
-  var count = f === -1 ? 0 : r - f + 1;
+  if (goneAt >= 0 && before.slots[goneAt] !== null && before.slots[goneAt] !== undefined) {
+    var gx = px + goneAt * (sw + gap);
+    var ghost = svgEl("g", { "class": "ghost ghost-left" });
+    ghost.appendChild(svgEl("rect", {
+      x: gx, y: py, width: sw, height: sh, rx: 9, "class": "slot slot-on"
+    }));
+    ghost.appendChild(svgEl("text", {
+      x: gx + sw / 2, y: py + sh / 2, "class": "box-label"
+    }, String(before.slots[goneAt])));
+    s.appendChild(ghost);
+    dropGhostLater(ghost);
+  }
+
   return {
     node: s,
     info: [
@@ -559,8 +874,9 @@ function drawQueue(state) {
   };
 }
 
-function drawCircular(state) {
+function drawCircular(state, prevState) {
   var q = parseQueue(state);
+  var before = prevState ? parseQueue(prevState) : null;
   var n = q.slots.length || 10;
   var f = q.f;
   var r = q.r;
@@ -578,10 +894,14 @@ function drawCircular(state) {
     pos.push([cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)]);
   }
 
+  function insideOf(o, k) {
+    if (!o || (o.f === -1 && o.r === -1)) return false;
+    if (o.f <= o.r) return k >= o.f && k <= o.r;
+    return k >= o.f || k <= o.r;
+  }
+
   function inside(k) {
-    if (f === -1 && r === -1) return false;
-    if (f <= r) return k >= f && k <= r;
-    return k >= f || k <= r;
+    return insideOf(q, k);
   }
 
   var count = 0;
@@ -594,14 +914,18 @@ function drawCircular(state) {
     var y = pos[i][1];
     var bw = 48;
     var bh = 38;
-    var cls = "slot" + (inside(i) ? " slot-on" : "");
+    var was = insideOf(before, i);
+    var now = inside(i);
+    var fresh = before ? !was : (addingOp() && i === r);
+    var cls = "slot" + (now ? " slot-on" : "");
     if (i === f) cls += " slot-front";
     if (i === r) cls += " slot-rear";
+    if (now && fresh) cls += " pop";
 
     s.appendChild(svgEl("rect", {
       x: x - bw / 2, y: y - bh / 2, width: bw, height: bh, rx: 9, "class": cls
     }));
-    if (inside(i)) {
+    if (now) {
       s.appendChild(svgEl("text", { x: x, y: y, "class": "box-label" }, String(q.slots[i])));
     }
     s.appendChild(svgEl("text", {
@@ -614,8 +938,17 @@ function drawCircular(state) {
     }
     if (i === r) {
       s.appendChild(svgEl("text", {
-        x: x, y: y + bh / 2 + 32, "class": "marker", fill: "#f59e0b"
+        x: x, y: y + bh / 2 + 30, "class": "marker", fill: "#f59e0b"
       }, "rear"));
+    }
+    if (was && !now && before.slots[i] !== null && before.slots[i] !== undefined) {
+      var ghost = svgEl("g", { "class": "ghost" });
+      ghost.appendChild(svgEl("rect", {
+        x: x - bw / 2, y: y - bh / 2, width: bw, height: bh, rx: 9, "class": "slot slot-on"
+      }));
+      ghost.appendChild(svgEl("text", { x: x, y: y, "class": "box-label" }, String(before.slots[i])));
+      s.appendChild(ghost);
+      dropGhostLater(ghost);
     }
   }
 
@@ -643,8 +976,9 @@ function drawCircular(state) {
 
 /* ------------------------------- graph ------------------------------ */
 
-function drawGraph(state) {
+function drawGraph(state, prevState) {
   var g = parseGraph(state);
+  var before = prevState ? parseGraph(prevState) : null;
   var n = g.n;
   if (!n) return { node: emptyEl("Graph is empty."), info: [] };
 
@@ -668,7 +1002,7 @@ function drawGraph(state) {
         s.appendChild(svgEl("line", {
           x1: pos[i][0], y1: pos[i][1],
           x2: pos[j][0], y2: pos[j][1],
-          "class": "edge"
+          "class": "edge edge-anim"
         }));
       }
     }
@@ -678,12 +1012,22 @@ function drawGraph(state) {
     var cls = "node-ring";
     if (g.visited[i]) cls = "node-visited";
     if (i === g.cur) cls = "node-hot";
-    s.appendChild(svgEl("circle", {
+    if (g.visited[i] && (!before || !before.visited[i])) cls += " pop";
+
+    if (i === g.cur) {
+      s.appendChild(svgEl("circle", {
+        cx: pos[i][0], cy: pos[i][1], r: 24, "class": "halo"
+      }));
+    }
+
+    var group = svgEl("g");
+    group.appendChild(svgEl("circle", {
       cx: pos[i][0], cy: pos[i][1], r: 24, "class": cls
     }));
-    s.appendChild(svgEl("text", {
+    group.appendChild(svgEl("text", {
       x: pos[i][0], y: pos[i][1], "class": "node-label"
     }, String(i)));
+    s.appendChild(group);
   }
 
   var info = [["order", g.path.length ? g.path.join(" \u2192 ") : "none yet"]];
@@ -699,21 +1043,29 @@ function drawGraph(state) {
 
 /* ----------------------------- rendering ---------------------------- */
 
-function drawStep(m, state) {
+function drawStep(m, state, prev) {
   switch (m) {
-    case "bst": return drawBST(state);
-    case "stack": return drawStack(state);
-    case "queue": return drawQueue(state);
-    case "circular": return drawCircular(state);
-    case "sll": return drawList(state, false);
-    case "dll": return drawList(state, true);
-    case "graph": return drawGraph(state);
+    case "bst": return drawBST(state, prev);
+    case "stack": return drawStack(state, prev);
+    case "queue": return drawQueue(state, prev);
+    case "circular": return drawCircular(state, prev);
+    case "sll": return drawList(state, false, prev);
+    case "dll": return drawList(state, true, prev);
+    case "graph": return drawGraph(state, prev);
     default: return { node: emptyEl("Unknown structure."), info: [] };
   }
 }
 
+function flashMessage() {
+  msgCard.classList.remove("flash");
+  void msgCard.offsetWidth;
+  msgCard.classList.add("flash");
+}
+
 function render() {
   var step = steps[idx];
+  var prevStep = idx > 0 ? steps[idx - 1] : null;
+  var prevState = prevStep ? prevStep.state : (idx === 0 ? carryState : null);
 
   modeBadge.textContent = MODE_NAMES[mode] || mode || "waiting";
   titleEl.textContent = title || "Waiting for an operation";
@@ -725,14 +1077,18 @@ function render() {
 
   if (!step) {
     stage.appendChild(emptyEl("No steps to draw yet."));
+    renderCode();
+    updateDbgState();
     return;
   }
 
   var out;
   try {
-    out = drawStep(mode, step.state);
+    out = drawStep(mode, step.state, prevState);
   } catch (e) {
     stage.appendChild(emptyEl("Could not draw this step."));
+    renderCode();
+    updateDbgState();
     return;
   }
 
@@ -752,13 +1108,197 @@ function render() {
     });
     stage.appendChild(info);
   }
+
+  flashMessage();
+  renderCode();
+  updateDbgState();
+}
+
+/* --------------------------- code panel ----------------------------- */
+
+function codeNote(text) {
+  var d = document.createElement("div");
+  d.className = "code-note";
+  d.textContent = text;
+  return d;
+}
+
+function codeMessage(text) {
+  var d = document.createElement("div");
+  d.className = "code-msg";
+  d.textContent = text;
+  return d;
+}
+
+function stripCode(line) {
+  return line.replace(/"(\\.|[^"\\])*"/g, "\"\"").replace(/\/\/.*$/, "");
+}
+
+function functionRange(name, line) {
+  var hint = typeof line === "number" && line > 0 ? line - 1 : 0;
+  var start = -1;
+  var i;
+
+  if (name) {
+    var safe = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    var re = new RegExp("^[A-Za-z_][A-Za-z0-9_\\s\\*]*\\b" + safe + "\\s*\\(");
+    for (i = 0; i < sourceLines.length; i++) {
+      if (re.test(sourceLines[i]) && sourceLines[i].indexOf(";") === -1) {
+        start = i;
+        break;
+      }
+    }
+  }
+
+  if (start < 0) {
+    return {
+      start: Math.max(0, hint - 8),
+      end: Math.min(sourceLines.length - 1, hint + 12),
+      top: false,
+      bottom: false
+    };
+  }
+
+  var open = -1;
+  var depth = 0;
+  var end = -1;
+
+  for (i = start; i < sourceLines.length; i++) {
+    var text = stripCode(sourceLines[i]);
+    for (var k = 0; k < text.length; k++) {
+      if (text[k] === "{") {
+        if (open < 0) open = i;
+        depth++;
+      } else if (text[k] === "}") {
+        depth--;
+        if (open >= 0 && depth === 0) {
+          end = i;
+          break;
+        }
+      }
+    }
+    if (end >= 0) break;
+  }
+
+  if (open < 0 || end < 0) {
+    return {
+      start: Math.max(0, hint - 8),
+      end: Math.min(sourceLines.length - 1, hint + 12),
+      top: false,
+      bottom: false
+    };
+  }
+
+  if (end - start > 55) {
+    var from = Math.max(start, hint - 14);
+    var to = Math.min(end, hint + 24);
+    return {
+      start: from,
+      end: to,
+      top: from > start,
+      bottom: to < end
+    };
+  }
+
+  return { start: start, end: end, top: false, bottom: false };
+}
+
+function renderCode() {
+  var step = steps[idx];
+  fnNameEl.textContent = step && step.fn ? step.fn : "\u2014";
+  lineNoEl.textContent = step && step.line ? "line " + step.line : "line \u2014";
+
+  codeEl.textContent = "";
+
+  if (!step) {
+    codeEl.appendChild(codeMessage("Run an operation in the C menu. The matching C code will appear here."));
+    return;
+  }
+
+  if (sourceLines === null) {
+    codeEl.appendChild(codeMessage("Loading the C source\u2026"));
+    return;
+  }
+
+  if (!sourceLines.length) {
+    codeEl.appendChild(codeMessage("Code view needs serve.py, so the page can read visualizer.c."));
+    return;
+  }
+
+  var range = functionRange(step.fn, step.line);
+  var active = null;
+
+  if (range.top) codeEl.appendChild(codeNote("\u2026"));
+
+  for (var n = range.start; n <= range.end; n++) {
+    var row = document.createElement("div");
+    row.className = "code-line";
+    row.setAttribute("data-line", String(n + 1));
+
+    var no = document.createElement("span");
+    no.className = "code-no";
+    no.textContent = String(n + 1);
+
+    var txt = document.createElement("span");
+    txt.className = "code-text";
+    txt.textContent = sourceLines[n] === "" ? " " : sourceLines[n];
+
+    row.appendChild(no);
+    row.appendChild(txt);
+
+    if (step.line === n + 1) {
+      row.className += " hit";
+      row.setAttribute("aria-current", "step");
+      active = row;
+    }
+
+    codeEl.appendChild(row);
+  }
+
+  if (range.bottom) codeEl.appendChild(codeNote("\u2026"));
+
+  if (active) {
+    var top = active.offsetTop - codeEl.clientHeight / 2 + active.offsetHeight / 2;
+    codeEl.scrollTop = Math.max(0, Math.floor(top / 20) * 20);
+  } else {
+    codeEl.scrollTop = 0;
+  }
+}
+
+async function loadSource() {
+  try {
+    var res = await fetch("visualizer.c", { cache: "no-store" });
+    if (!res.ok) throw new Error("no source");
+    sourceLines = (await res.text()).split(/\r?\n/);
+  } catch (e) {
+    sourceLines = [];
+  }
+  renderCode();
 }
 
 /* ----------------------------- playback ----------------------------- */
 
+function stateLabel() {
+  if (!steps.length) return "idle";
+  if (playing) return "running";
+  if (idx >= steps.length - 1) return "done";
+  return "paused";
+}
+
+function updateDbgState() {
+  var label = stateLabel();
+  dbgStateEl.textContent = label;
+  dbgStateEl.className = "state " + (label === "idle" ? "" : label);
+}
+
 function updatePlayButton() {
   playBtn.innerHTML = playing ? "&#10074;&#10074; Pause" : "&#9654; Play";
   playBtn.classList.toggle("primary", !playing);
+  updateDbgState();
+}
+
+function stepDelay() {
+  return Math.max(220, Math.round(STEP_MS / speed));
 }
 
 function stopClock() {
@@ -783,6 +1323,7 @@ function play(fromStart) {
 
   if (steps.length < 2) {
     stopClock();
+    updateDbgState();
     return;
   }
 
@@ -797,7 +1338,7 @@ function play(fromStart) {
     } else {
       stopClock();
     }
-  }, STEP_MS);
+  }, stepDelay());
 }
 
 function stepBy(delta) {
@@ -812,13 +1353,36 @@ function stepBy(delta) {
 function loadTrace(data) {
   everLoaded = true;
   stopClock();
-  steps = Array.isArray(data.steps) ? data.steps : [];
-  mode = data.mode || "";
+
+  var nextSteps = Array.isArray(data.steps) ? data.steps : [];
+  var nextMode = data.mode || "";
+  carryState = null;
+
+  if (nextSteps.length && nextMode && lastFinal[nextMode]) {
+    if (canCarry(nextMode, lastFinal[nextMode], nextSteps[0].state)) {
+      carryState = lastFinal[nextMode];
+    }
+  }
+
+  steps = nextSteps;
+  mode = nextMode;
   title = data.title || "Operation";
   idx = 0;
+
+  if (steps.length && mode) {
+    lastFinal[mode] = steps[steps.length - 1].state;
+  }
+
   render();
-  if (steps.length > 1) play(false);
+
+  if (autoPlay && steps.length > 1) {
+    play(false);
+  } else {
+    updateDbgState();
+  }
 }
+
+/* --------------------------- trace intake --------------------------- */
 
 function setStatus(ok) {
   if (ok) {
@@ -890,6 +1454,16 @@ function startLive() {
   };
 }
 
+/* ----------------------------- controls ----------------------------- */
+
+function toggleCode(force) {
+  var hide = typeof force === "boolean" ? force : !codeWrap.classList.contains("hidden");
+  codeWrap.classList.toggle("hidden", hide);
+  codeToggle.textContent = hide ? "Show code" : "Hide code";
+  codeToggle.setAttribute("aria-expanded", String(!hide));
+  if (!hide) renderCode();
+}
+
 document.getElementById("restart").addEventListener("click", function () {
   stopClock();
   if (steps.length) {
@@ -905,6 +1479,18 @@ playBtn.addEventListener("click", function () {
   else play(true);
 });
 
+autoBox.addEventListener("change", function () {
+  autoPlay = autoBox.checked;
+  if (!autoPlay && playing) stopClock();
+});
+
+speedSel.addEventListener("change", function () {
+  speed = parseFloat(speedSel.value) || 1;
+  if (playing) play(false);
+});
+
+codeToggle.addEventListener("click", function () { toggleCode(); });
+
 document.addEventListener("keydown", function (e) {
   if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
   if (e.key === "ArrowLeft") {
@@ -917,10 +1503,14 @@ document.addEventListener("keydown", function (e) {
     e.preventDefault();
     if (playing) stopClock();
     else play(true);
+  } else if (e.key === "c" || e.key === "C") {
+    toggleCode();
   }
 });
 
 updatePlayButton();
+renderCode();
+loadSource();
 
 if (location.protocol === "file:") {
   statusEl.textContent = "open the page through serve.py";
