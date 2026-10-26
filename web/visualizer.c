@@ -465,7 +465,9 @@ void save_sll(LNode *head, char *msg)
 
 LNode *sll_insert_front(LNode *head)
 {
-    LNode *newnode = sll_create_node();
+    LNode *newnode;
+    save_sll(head, "List before insertion.");
+    newnode = sll_create_node();
     if (head == NULL) head = newnode;
     else { newnode->next = head; head = newnode; }
     sll_cur = head;
@@ -478,6 +480,7 @@ LNode *sll_insert_end(LNode *head)
 {
     LNode *newnode;
     LNode *tmp;
+    save_sll(head, "List before insertion.");
     if (head == NULL) head = sll_create_node();
     else
     {
@@ -505,6 +508,7 @@ LNode *sll_insert_pos(LNode *head, int pos)
     if (pos < 1) { printf("Invalid position\n"); return head; }
     if (pos == 1) return sll_insert_front(head);
     if (head == NULL) { printf("Invalid position\n"); return head; }
+    save_sll(head, "List before insertion.");
     tmp = head;
     for (i = 1; i < pos - 1 && tmp->next != NULL; i++)
     {
@@ -526,6 +530,9 @@ LNode *sll_delete_front(LNode *head)
 {
     LNode *tmp;
     if (head == NULL) { printf("List is empty\n"); return head; }
+    sll_cur = head;
+    save_sll(head, "Node that will be deleted.");
+    sll_cur = NULL;
     tmp = head;
     head = tmp->next;
     free(tmp);
@@ -540,16 +547,28 @@ LNode *sll_delete_last(LNode *head)
     if (head == NULL) { printf("List is empty\n"); return head; }
     if (head->next == NULL)
     {
+        sll_cur = head;
+        save_sll(head, "Only one node, so remove it.");
         free(head);
         head = NULL;
+        sll_cur = NULL;
         save_sll(head, "Deleted the only node.");
         return head;
     }
     temp = head;
     temp1 = head->next;
-    while (temp1->next != NULL) { temp = temp1; temp1 = temp1->next; }
+    while (temp1->next != NULL)
+    {
+        sll_cur = temp1;
+        save_sll(head, "Moving to the next node.");
+        temp = temp1;
+        temp1 = temp1->next;
+    }
+    sll_cur = temp1;
+    save_sll(head, "Last node found.");
     temp->next = NULL;
     free(temp1);
+    sll_cur = NULL;
     save_sll(head, "Deleted the last node.");
     return head;
 }
@@ -564,11 +583,21 @@ LNode *sll_delete_pos(int pos, LNode *head)
     while (temp != NULL) { count++; temp = temp->next; }
     if (pos < 1 || pos > count) { printf("Invalid position\n"); return head; }
     if (pos == 1) return sll_delete_front(head);
+    save_sll(head, "List before deletion.");
     temp1 = head;
     temp = head;
-    for (i = 1; i < pos; i++) { temp1 = temp; temp = temp->next; }
+    for (i = 1; i < pos; i++)
+    {
+        sll_cur = temp;
+        save_sll(head, "Moving to the next node.");
+        temp1 = temp;
+        temp = temp->next;
+    }
+    sll_cur = temp;
+    save_sll(head, "Node to delete found.");
     temp1->next = temp->next;
     free(temp);
+    sll_cur = NULL;
     save_sll(head, "Deleted the node at the position.");
     return head;
 }
@@ -623,7 +652,9 @@ void save_dll(DNode *head, char *msg)
 
 DNode *dll_insert_begin(DNode *head)
 {
-    DNode *newnode = dll_create_node();
+    DNode *newnode;
+    save_dll(head, "List before insertion.");
+    newnode = dll_create_node();
     if (head == NULL) head = newnode;
     else { newnode->next = head; head->prev = newnode; head = newnode; }
     dll_cur = head;
@@ -636,6 +667,7 @@ DNode *dll_insert_end(DNode *head)
 {
     DNode *newnode;
     DNode *tmp;
+    save_dll(head, "List before insertion.");
     if (head == NULL) head = dll_create_node();
     else
     {
@@ -664,6 +696,7 @@ DNode *dll_insert_pos(DNode *head, int pos)
     if (pos <= 0) return head;
     if (pos == 1) return dll_insert_begin(head);
     if (head == NULL) return head;
+    save_dll(head, "List before insertion.");
     tmp = head;
     while (i < pos - 1 && tmp->next != NULL)
     {
@@ -688,6 +721,9 @@ DNode *dll_delete_first(DNode *head)
 {
     DNode *tmp;
     if (head == NULL) { printf("List is empty\n"); return head; }
+    dll_cur = head;
+    save_dll(head, "Node that will be deleted.");
+    dll_cur = NULL;
     tmp = head;
     if (head->next == NULL) head = NULL;
     else { head = head->next; head->prev = NULL; }
@@ -701,10 +737,18 @@ DNode *dll_delete_last(DNode *head)
     DNode *tmp;
     if (head == NULL) { printf("List is empty\n"); return head; }
     tmp = head;
-    while (tmp->next != NULL) tmp = tmp->next;
+    while (tmp->next != NULL)
+    {
+        dll_cur = tmp;
+        save_dll(head, "Moving to the next node.");
+        tmp = tmp->next;
+    }
+    dll_cur = tmp;
+    save_dll(head, "Last node found.");
     if (tmp->prev == NULL) head = NULL;
     else tmp->prev->next = NULL;
     free(tmp);
+    dll_cur = NULL;
     save_dll(head, "Deleted the last node.");
     return head;
 }
@@ -715,12 +759,22 @@ DNode *dll_delete_pos(DNode *head, int pos)
     int i = 1;
     if (head == NULL || pos <= 0) return head;
     if (pos == 1) return dll_delete_first(head);
+    save_dll(head, "List before deletion.");
     tmp = head;
-    while (i < pos && tmp != NULL) { tmp = tmp->next; i++; }
-    if (tmp == NULL) return head;
+    while (i < pos && tmp != NULL)
+    {
+        dll_cur = tmp;
+        save_dll(head, "Moving to the next node.");
+        tmp = tmp->next;
+        i++;
+    }
+    if (tmp == NULL) { dll_cur = NULL; return head; }
+    dll_cur = tmp;
+    save_dll(head, "Node to delete found.");
     if (tmp->next != NULL) tmp->next->prev = tmp->prev;
     if (tmp->prev != NULL) tmp->prev->next = tmp->next;
     free(tmp);
+    dll_cur = NULL;
     save_dll(head, "Deleted the node at the position.");
     return head;
 }
@@ -728,17 +782,31 @@ DNode *dll_delete_pos(DNode *head, int pos)
 void dll_traverse_forward(DNode *head)
 {
     DNode *tmp = head;
-    if (head == NULL) { printf("List is empty\n"); return; }
-    while (tmp != NULL) { printf("%d -> ", tmp->data); tmp = tmp->next; }
+    if (head == NULL) { printf("List is empty\n"); save_dll(head, "List is empty."); return; }
+    while (tmp != NULL)
+    {
+        dll_cur = tmp;
+        save_dll(head, "Visit this node.");
+        printf("%d -> ", tmp->data);
+        tmp = tmp->next;
+    }
+    dll_cur = NULL;
     printf("NULL\n");
 }
 
 void dll_traverse_backward(DNode *head)
 {
     DNode *tmp = head;
-    if (head == NULL) { printf("List is empty\n"); return; }
+    if (head == NULL) { printf("List is empty\n"); save_dll(head, "List is empty."); return; }
     while (tmp->next != NULL) tmp = tmp->next;
-    while (tmp != NULL) { printf("%d -> ", tmp->data); tmp = tmp->prev; }
+    while (tmp != NULL)
+    {
+        dll_cur = tmp;
+        save_dll(head, "Visit this node.");
+        printf("%d -> ", tmp->data);
+        tmp = tmp->prev;
+    }
+    dll_cur = NULL;
     printf("NULL\n");
 }
 
@@ -966,9 +1034,10 @@ void bst_menu(void)
             printf("Number of interior nodes: %d\n", interior_nodes(bst));
             break;
         case 8:
+            begin("bst", "Clear");
+            save_bst(bst, "Tree before clear.");
             free_tree(bst);
             bst = NULL;
-            begin("bst", "Clear");
             save_bst(bst, "Tree cleared.");
             end_trace();
             break;
@@ -997,12 +1066,14 @@ void stack_menu(void)
             printf("Enter element: ");
             scanf("%d", &ele);
             begin("stack", "Push");
+            save_stack(&st, "Stack before push.");
             push(&st, ele);
             save_stack(&st, "Value pushed on top.");
             end_trace();
             break;
         case 2:
             begin("stack", "Pop");
+            save_stack(&st, "Stack before pop.");
             x = pop(&st);
             save_stack(&st, "Value removed from the top.");
             end_trace();
@@ -1013,8 +1084,9 @@ void stack_menu(void)
             else printf("Top element = %d\n", peek(&st));
             break;
         case 4:
-            st.top = -1;
             begin("stack", "Clear");
+            save_stack(&st, "Stack before clear.");
+            st.top = -1;
             save_stack(&st, "Stack cleared.");
             end_trace();
             break;
@@ -1046,12 +1118,14 @@ void simple_queue_menu(void)
             printf("Enter element: ");
             scanf("%d", &ele);
             begin("queue", "Enqueue");
+            save_queue(&q, "Queue before enqueue.");
             enqueue(&q, ele);
             save_queue(&q, "Value added at the rear.");
             end_trace();
             break;
         case 2:
             begin("queue", "Dequeue");
+            save_queue(&q, "Queue before dequeue.");
             x = dequeue(&q);
             save_queue(&q, "Value removed from the front.");
             end_trace();
@@ -1066,8 +1140,9 @@ void simple_queue_menu(void)
             else printf("Queue is not full\n");
             break;
         case 5:
-            q.f = q.r = -1;
             begin("queue", "Clear");
+            save_queue(&q, "Queue before clear.");
+            q.f = q.r = -1;
             save_queue(&q, "Queue cleared.");
             end_trace();
             break;
@@ -1099,12 +1174,14 @@ void circular_queue_menu(void)
             printf("Enter element: ");
             scanf("%d", &ele);
             begin("circular", "Enqueue");
+            save_cq("Queue before enqueue.");
             cq_enqueue(ele);
             save_cq("Value added at the rear.");
             end_trace();
             break;
         case 2:
             begin("circular", "Dequeue");
+            save_cq("Queue before dequeue.");
             x = cq_dequeue();
             save_cq("Value removed from the front.");
             end_trace();
@@ -1119,8 +1196,9 @@ void circular_queue_menu(void)
             else printf("Queue is not full\n");
             break;
         case 5:
-            cq_front = cq_rear = -1;
             begin("circular", "Clear");
+            save_cq("Queue before clear.");
+            cq_front = cq_rear = -1;
             save_cq("Queue cleared.");
             end_trace();
             break;
@@ -1207,9 +1285,10 @@ void singly_menu(void)
             printf("Number of nodes: %d\n", sll_count(sll));
             break;
         case 8:
+            begin("sll", "Clear");
+            save_sll(sll, "List before clear.");
             sll_free(sll);
             sll = NULL;
-            begin("sll", "Clear");
             save_sll(sll, "List cleared.");
             end_trace();
             break;
@@ -1277,16 +1356,21 @@ void doubly_menu(void)
             break;
         case 7:
             printf("List: ");
+            begin("dll", "Traverse forward");
             dll_traverse_forward(dll);
+            end_trace();
             break;
         case 8:
             printf("List: ");
+            begin("dll", "Traverse backward");
             dll_traverse_backward(dll);
+            end_trace();
             break;
         case 9:
+            begin("dll", "Clear");
+            save_dll(dll, "List before clear.");
             dll_free(dll);
             dll = NULL;
-            begin("dll", "Clear");
             save_dll(dll, "List cleared.");
             end_trace();
             break;
@@ -1337,8 +1421,12 @@ void graph_menu(void)
             scanf("%d", &n);
             if (n >= 2 && n <= MAX_V)
             {
+                begin("graph", "Set vertices");
+                save_graph("Graph before resize.");
                 gn = n;
                 graph_reset();
+                save_graph("Graph resized.");
+                end_trace();
                 printf("Graph now has %d vertices.\n", gn);
             }
             else printf("Invalid number of vertices\n");
@@ -1351,6 +1439,7 @@ void graph_menu(void)
             if (u >= 0 && u < gn && v >= 0 && v < gn)
             {
                 begin("graph", "Add edge");
+                save_graph("Graph before adding the edge.");
                 add_edge(u, v);
                 save_graph("Edge added.");
                 end_trace();
@@ -1371,8 +1460,9 @@ void graph_menu(void)
             else printf("Invalid vertex\n");
             break;
         case 5:
-            graph_reset();
             begin("graph", "Clear");
+            save_graph("Graph before clear.");
+            graph_reset();
             save_graph("All edges cleared.");
             end_trace();
             printf("Edges cleared\n");

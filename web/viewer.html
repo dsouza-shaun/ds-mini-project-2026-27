@@ -162,6 +162,9 @@ var barEl = document.getElementById("bar");
 var dotEl = document.getElementById("dot");
 var statusEl = document.getElementById("status");
 var playBtn = document.getElementById("play");
+var prevBtn = document.getElementById("prev");
+var nextBtn = document.getElementById("next");
+var contBtn = document.getElementById("cont");
 
 var steps = [];
 var idx = 0;
@@ -169,7 +172,7 @@ var mode = "";
 var title = "";
 var timer = null;
 var playing = false;
-var lastRaw = "";
+var lastTraceKey = "";
 var everLoaded = false;
 var live = false;
 var eventSource = null;
@@ -720,6 +723,9 @@ function render() {
   counterEl.textContent = steps.length ? (idx + 1) + " / " + steps.length : "0 / 0";
   barEl.style.width = steps.length ? (((idx + 1) / steps.length) * 100) + "%" : "0%";
   msgEl.textContent = step ? step.msg : "Nothing to show yet.";
+  prevBtn.disabled = !steps.length || idx <= 0;
+  nextBtn.disabled = !steps.length || idx >= steps.length - 1;
+  contBtn.disabled = steps.length < 2 || idx >= steps.length - 1;
 
   stage.textContent = "";
 
@@ -777,8 +783,7 @@ function play(fromStart) {
     idx = 0;
     render();
   } else if (idx >= steps.length - 1) {
-    idx = 0;
-    render();
+    return;
   }
 
   if (steps.length < 2) {
@@ -837,7 +842,7 @@ function setStatus(ok) {
 }
 
 function receiveTrace(raw) {
-  if (!raw || raw === lastRaw) return false;
+  if (!raw) return false;
 
   var data;
   try {
@@ -846,7 +851,12 @@ function receiveTrace(raw) {
     return false;
   }
 
-  lastRaw = raw;
+  /* The SSE stream and fetch() send the same JSON with different
+     whitespace. Compare the parsed trace so a poll cannot reload it. */
+  var key = JSON.stringify(data);
+  if (key === lastTraceKey) return false;
+
+  lastTraceKey = key;
   loadTrace(data);
   return true;
 }
@@ -934,7 +944,6 @@ if (location.protocol === "file:") {
   }, 1200);
 
   window.addEventListener("focus", poll);
-  document.addEventListener("pointerdown", poll);
   document.addEventListener("visibilitychange", function () {
     if (!document.hidden) poll();
   });
