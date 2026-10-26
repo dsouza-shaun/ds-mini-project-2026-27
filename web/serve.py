@@ -1,19 +1,34 @@
 import http.server
+import json
 import os
 import shutil
 import socket
 import subprocess
 import sys
 import threading
+import time
 import webbrowser
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 SOURCE = HERE / "visualizer.c"
 EXE = HERE / ("visualizer.exe" if os.name == "nt" else "visualizer")
+TRACE = HERE / "trace.json"
+
+
+class Server(http.server.ThreadingHTTPServer):
+    daemon_threads = True
+
+    def handle_error(self, request, client_address):
+        error = sys.exc_info()[1]
+        if isinstance(error, (BrokenPipeError, ConnectionResetError, ConnectionAbortedError)):
+            return
+        super().handle_error(request, client_address)
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(HERE), **kwargs)
 
@@ -21,6 +36,64 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store, no-cache, must-revalidate")
         self.send_header("Pragma", "no-cache")
         super().end_headers()
+
+    def do_GET(self):
+        if self.path.split("?", 1)[0] == "/events":
+            self.stream_trace()
+        else:
+            super().do_GET()
+
+    def copyfile(self, source, outputfile):
+        try:
+            super().copyfile(source, outputfile)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            pass
+
+    def stream_trace(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Accel-Buffering", "no")
+        self.end_headers()
+
+        last_signature = None
+        last_ping = time.monotonic()
+
+        try:
+            while True:
+                payload = None
+
+                try:
+                    info = TRACE.stat()
+                    signature = (info.st_mtime_ns, info.st_size)
+
+                    if signature != last_signature:
+                        text = TRACE.read_text(encoding="utf-8").strip()
+
+                        if text:
+                            json.loads(text)
+                            payload = text
+                            last_signature = signature
+                except FileNotFoundError:
+                    last_signature = None
+                except (OSError, ValueError):
+                    pass
+
+                if payload is not None:
+                    clean = payload.replace("\r", "").replace("\n", "")
+                    self.wfile.write(("data: " + clean + "\n\n").encode("utf-8"))
+                    self.wfile.flush()
+                    last_ping = time.monotonic()
+                elif time.monotonic() - last_ping > 10:
+                    self.wfile.write(b": ping\n\n")
+                    self.wfile.flush()
+                    last_ping = time.monotonic()
+
+                time.sleep(0.25)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, OSError):
+            pass
+        finally:
+            self.close_connection = True
 
     def log_message(self, fmt, *args):
         pass
@@ -70,7 +143,7 @@ def main():
         return 1
 
     port = pick_port()
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    server = Server(("127.0.0.1", port), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
     url = "http://127.0.0.1:%d/viewer.html" % port

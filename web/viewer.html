@@ -171,6 +171,8 @@ var timer = null;
 var playing = false;
 var lastRaw = "";
 var everLoaded = false;
+var live = false;
+var eventSource = null;
 
 var MODE_NAMES = {
   bst: "Binary search tree",
@@ -821,11 +823,32 @@ function loadTrace(data) {
 function setStatus(ok) {
   if (ok) {
     dotEl.className = "dot ok";
-    statusEl.textContent = everLoaded ? "trace.json connected" : "connected, waiting for an operation";
+    if (everLoaded) {
+      statusEl.textContent = live ? "live updates" : "trace.json connected";
+    } else {
+      statusEl.textContent = live
+        ? "live, waiting for an operation"
+        : "connected, waiting for an operation";
+    }
   } else {
     dotEl.className = "dot wait";
-    statusEl.textContent = "looking for trace.json";
+    statusEl.textContent = live ? "reconnecting" : "looking for trace.json";
   }
+}
+
+function receiveTrace(raw) {
+  if (!raw || raw === lastRaw) return false;
+
+  var data;
+  try {
+    data = JSON.parse(raw);
+  } catch (e) {
+    return false;
+  }
+
+  lastRaw = raw;
+  loadTrace(data);
+  return true;
 }
 
 async function poll() {
@@ -833,17 +856,38 @@ async function poll() {
   try {
     var res = await fetch("trace.json?t=" + Date.now(), { cache: "no-store" });
     if (!res.ok) throw new Error("no trace file");
-    var raw = await res.text();
-    if (raw && raw !== lastRaw) {
-      var data = JSON.parse(raw);
-      lastRaw = raw;
-      loadTrace(data);
-    }
+    receiveTrace(await res.text());
     ok = true;
   } catch (e) {
     ok = false;
   }
   setStatus(ok);
+}
+
+function startLive() {
+  if (!("EventSource" in window)) {
+    setInterval(poll, 1000);
+    return;
+  }
+
+  var source = new EventSource("events");
+  eventSource = source;
+
+  source.onopen = function () {
+    live = true;
+    setStatus(true);
+  };
+
+  source.onmessage = function (event) {
+    live = true;
+    receiveTrace(event.data);
+    setStatus(true);
+  };
+
+  source.onerror = function () {
+    live = false;
+    setStatus(false);
+  };
 }
 
 document.getElementById("restart").addEventListener("click", function () {
@@ -877,8 +921,24 @@ document.addEventListener("keydown", function (e) {
 });
 
 updatePlayButton();
-poll();
-setInterval(poll, 800);
+
+if (location.protocol === "file:") {
+  statusEl.textContent = "open the page through serve.py";
+  dotEl.className = "dot wait";
+} else {
+  poll();
+  startLive();
+
+  setInterval(function () {
+    if (!live) poll();
+  }, 1200);
+
+  window.addEventListener("focus", poll);
+  document.addEventListener("pointerdown", poll);
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) poll();
+  });
+}
 </script>
 </body>
 </html>

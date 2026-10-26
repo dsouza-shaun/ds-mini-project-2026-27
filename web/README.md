@@ -18,8 +18,8 @@ python serve.py
 3. opens `viewer.html` in your browser,
 4. runs the C program in the same terminal.
 
-Use the C menus normally. Every operation rewrites `trace.json`, and the page
-picks it up within a second and plays the steps.
+Use the C menus normally. Every operation rewrites `trace.json`, and the server
+pushes it to the page immediately, which plays the steps.
 
 ## Requirements
 
@@ -55,8 +55,10 @@ Keyboard: `←` and `→` step, `space` plays or pauses.
 | `trace.json` | generated after every operation (ignored by git) |
 
 `trace.json` is only a snapshot of one operation. The C program opens it with
-`"w"`, writes each step, then closes it. The page ignores a half-written file
-and retries on the next poll, so it never draws a broken step.
+`"w"`, writes each step, then closes it. The page receives the finished file
+through `/events` (server-sent events), so updates appear without a refresh.
+If that connection drops, the page falls back to polling and refreshes as soon
+as the tab regains focus.
 
 ## Notes
 
