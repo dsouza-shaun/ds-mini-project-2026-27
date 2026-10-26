@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Structure Visualizer</title>
+<style>
+:root {
+  --ink: #0f172a;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --card: #ffffff;
+  --accent: #4f46e5;
+  --accent-soft: #eef2ff;
+  --hot: #f59e0b;
+  --green: #10b981;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: var(--ink);
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+  min-height: 100vh;
+}
+.app { max-width: 1080px; margin: 0 auto; padding: 28px 20px 40px; }
+header { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+.logo {
+  width: 46px; height: 46px; border-radius: 13px;
+  background: linear-gradient(135deg, #6366f1, #4338ca);
+  color: #fff; display: grid; place-items: center;
+  font-weight: 800; font-size: 15px; letter-spacing: .5px;
+  box-shadow: 0 8px 18px rgba(79, 70, 229, .28);
+}
+header h1 { font-size: 20px; margin: 0; }
+header p { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
+.card {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 18px; box-shadow: 0 10px 30px rgba(15, 23, 42, .06);
+}
+.stage-card { padding: 18px 22px 8px; overflow: hidden; }
+.stage-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.badge {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--accent);
+  background: var(--accent-soft); padding: 4px 9px; border-radius: 999px;
+}
+h2 { margin: 8px 0 0; font-size: 17px; }
+.status { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); padding-top: 4px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; }
+.dot.ok { background: var(--green); box-shadow: 0 0 0 3px rgba(16, 185, 129, .15); }
+.dot.wait { background: var(--hot); animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+.stage {
+  min-height: 440px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 10px 0 18px;
+}
+.stage svg { max-width: 100%; height: auto; max-height: 56vh; display: block; margin: 0 auto; }
+.empty { color: var(--muted); font-size: 14px; padding: 60px 10px; text-align: center; line-height: 1.6; }
+.msg-card { margin-top: 14px; padding: 14px 20px; display: flex; gap: 12px; align-items: baseline; }
+.msg-card .tag { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .1em; white-space: nowrap; }
+#msg { margin: 0; font-size: 14px; line-height: 1.45; }
+.controls { margin-top: 14px; padding: 12px 14px 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+button {
+  font: inherit; font-size: 13px; font-weight: 600; border: 1px solid var(--line);
+  background: #fff; color: var(--ink); padding: 9px 14px; border-radius: 10px;
+  cursor: pointer; transition: .15s;
+}
+button:hover:not(:disabled) { border-color: #c7d2fe; background: #f8faff; }
+button:disabled { opacity: .4; cursor: not-allowed; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.primary:hover:not(:disabled) { background: #4338ca; border-color: #4338ca; }
+.spacer { flex: 1; }
+.counter { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted); padding-right: 4px; }
+.bar { flex-basis: 100%; height: 4px; border-radius: 999px; background: #eef2ff; overflow: hidden; margin: 6px 4px 2px; }
+.bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #818cf8, #4f46e5); transition: width .2s; }
+.hint { margin: 16px 2px 0; font-size: 12px; color: var(--muted); text-align: center; }
+kbd {
+  font: inherit; font-size: 11px; border: 1px solid var(--line);
+  border-bottom-width: 2px; border-radius: 5px; padding: 1px 5px; background: #fff;
+}
+.draw text { font-family: inherit; }
+.edge { stroke: #cbd5e1; stroke-width: 2; }
+.node-ring { fill: #fff; stroke: #6366f1; stroke-width: 2; }
+.node-hot { fill: #fef3c7; stroke: #f59e0b; stroke-width: 3; }
+.node-visited { fill: #c7d2fe; stroke: #4f46e5; stroke-width: 2; }
+.node-label { font-size: 14px; font-weight: 700; fill: #1e293b; text-anchor: middle; dominant-baseline: central; }
+.node-sub { font-size: 10px; fill: #64748b; text-anchor: middle; }
+.slot { fill: #fff; stroke: #cbd5e1; stroke-width: 1.5; }
+.slot-on { fill: #eef2ff; stroke: #818cf8; }
+.slot-hot { fill: #fef3c7; stroke: #f59e0b; stroke-width: 2.5; }
+.slot-front { stroke: var(--green); stroke-width: 3; }
+.slot-rear { stroke: var(--hot); stroke-width: 3; }
+.box-label { font-size: 15px; font-weight: 700; fill: #1e293b; text-anchor: middle; dominant-baseline: central; }
+.marker { font-size: 11px; font-weight: 800; text-anchor: middle; }
+.arrow { stroke: #94a3b8; stroke-width: 2; fill: none; }
+.info { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; font-size: 12px; color: var(--muted); padding: 2px 10px 4px; }
+.chip { background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; }
+.chip b { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">DS</div>
+    <div>
+      <h1>Data Structure Visualizer</h1>
+      <p>Watch your C structures, one step at a time.</p>
+    </div>
+  </header>
+
+  <section class="card stage-card">
+    <div class="stage-head">
+      <div>
+        <span id="mode" class="badge">waiting</span>
+        <h2 id="title">Waiting for an operation</h2>
+      </div>
+      <div class="status">
+        <span id="dot" class="dot wait"></span>
+        <span id="status">looking for trace.json</span>
+      </div>
+    </div>
+    <div id="stage" class="stage">
+      <div class="empty">Start <b>visualizer.exe</b> through <b>serve.py</b> and pick an operation in the terminal.</div>
+    </div>
+  </section>
+
+  <section class="card msg-card">
+    <span class="tag">STEP</span>
+    <p id="msg">Nothing to show yet.</p>
+  </section>
+
+  <section class="card controls">
+    <button id="restart" title="Back to the first step">&#8634; Restart</button>
+    <button id="prev" title="Previous step">&#9664; Prev</button>
+    <button id="play" class="primary" title="Play from the beginning">&#9654; Play</button>
+    <button id="cont" title="Continue from the current step">Continue</button>
+    <button id="next" title="Next step">Next &#9654;</button>
+    <span class="spacer"></span>
+    <span id="counter" class="counter">0 / 0</span>
+    <div class="bar"><i id="bar"></i></div>
+  </section>
+
+  <p class="hint">
+    <kbd>&larr;</kbd> <kbd>&rarr;</kbd> to step &nbsp;&middot;&nbsp;
+    <kbd>space</kbd> to play or pause &nbsp;&middot;&nbsp;
+    new operations start playing automatically
+  </p>
+</div>
+
+<script>
+"use strict";
+var NS = "http://www.w3.org/2000/svg";
+var STEP_MS = 900;
+
+var stage = document.getElementById("stage");
+var modeBadge = document.getElementById("mode");
+var titleEl = document.getElementById("title");
+var msgEl = document.getElementById("msg");
+var counterEl = document.getElementById("counter");
+var barEl = document.getElementById("bar");
+var dotEl = document.getElementById("dot");
+var statusEl = document.getElementById("status");
+var playBtn = document.getElementById("play");
+
+var steps = [];
+var idx = 0;
+var mode = "";
+var title = "";
+var timer = null;
+var playing = false;
+var lastRaw = "";
+var everLoaded = false;
+
+var MODE_NAMES = {
+  bst: "Binary search tree",
+  stack: "Stack",
+  queue: "Simple queue",
+  circular: "Circular queue",
+  sll: "Singly linked list",
+  dll: "Doubly linked list",
+  graph: "Graph"
+};
+
+function svgEl(name, attrs, text) {
+  var e = document.createElementNS(NS, name);
+  if (attrs) {
+    for (var k in attrs) {
+      if (Object.prototype.hasOwnProperty.call(attrs, k)) e.setAttribute(k, attrs[k]);
+    }
+  }
+  if (text !== undefined && text !== null) e.textContent = text;
+  return e;
+}
+
+function makeSvg(w, h) {
+  var s = svgEl("svg", { viewBox: "0 0 " + w + " " + h, role: "img" });
+  s.setAttribute("class", "draw");
+  s.appendChild(svgEl("defs"));
+  return s;
+}
+
+function addArrow(s, id, color) {
+  var m = svgEl("marker", {
+    id: id, viewBox: "0 0 10 10", refX: "9", refY: "5",
+    markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse"
+  });
+  m.appendChild(svgEl("path", { d: "M0 0 L10 5 L0 10 z", fill: color }));
+  s.querySelector("defs").appendChild(m);
+}
+
+function emptyEl(text) {
+  var d = document.createElement("div");
+  d.className = "empty";
+  d.textContent = text;
+  return d;
+}
+
+function nums(str) {
+  var t = (str || "").trim();
+  return t ? t.split(/\s+/).map(Number) : [];
+}
+
+function parseTree(str) {
+  var i = 0;
+  var n = str.length;
+
+  function skip() {
+    while (i < n && str[i] === " ") i++;
+  }
+
+  function node() {
+    skip();
+    if (i >= n) throw new Error("Unexpected end of tree");
+    if (str[i] === "-") {
+      var next = str[i + 1];
+      if (next === undefined || !/[0-9]/.test(next)) {
+        i++;
+        return null;
+      }
+    }
+    if (str[i] !== "(") throw new Error("Expected (");
+    i++;
+    skip();
+    var sign = 1;
+    if (str[i] === "-") { sign = -1; i++; }
+    var digits = "";
+    while (i < n && /[0-9]/.test(str[i])) digits += str[i++];
+    if (!digits) throw new Error("Expected a number");
+    var value = sign * parseInt(digits, 10);
+    var hot = false;
+    if (str[i] === "*") { hot = true; i++; }
+    var left = node();
+    var right = node();
+    skip();
+    if (str[i] !== ")") throw new Error("Expected )");
+    i++;
+    return { value: value, left: left, right: right, hot: hot };
+  }
+
+  return node();
+}
+
+function parseList(str) {
+  var t = (str || "").trim();
+  if (!t) return [];
+  return t.split(/\s+/).map(function (tok) {
+    var hot = tok.charAt(tok.length - 1) === "*";
+    var raw = hot ? tok.slice(0, -1) : tok;
+    return { value: parseInt(raw, 10), hot: hot };
+  });
+}
+
+function parseQueue(str) {
+  var t = (str || "").trim().split(/\s+/).filter(Boolean);
+  var f = parseInt(t[0], 10);
+  var r = parseInt(t[1], 10);
+  var slots = t.slice(2).map(function (x) {
+    return x === "-" ? null : parseInt(x, 10);
+  });
+  return { f: f, r: r, slots: slots };
+}
+
+function parseGraph(str) {
+  var p = str.split(";");
+  var n = parseInt(p[0], 10) || 0;
+  var matrix = [];
+  var i, j;
+  for (i = 0; i < n; i++) {
+    var row = (p[1 + i] || "").trim();
+    matrix.push(row ? row.split(/\s+/).map(Number) : []);
+  }
+  var visited = nums(p[1 + n]);
+  var cur = parseInt(p[2 + n], 10);
+  var auxType = (p[3 + n] || "-").trim();
+  var aux = nums(p[4 + n]);
+  var path = nums(p[5 + n]);
+  return { n: n, matrix: matrix, visited: visited, cur: cur, auxType: auxType, aux: aux, path: path };
+}
+
+/* ------------------------------- tree ------------------------------- */
+
+function drawBST(state) {
+  var root;
+  try {
+    root = parseTree(state);
+  } catch (e) {
+    return { node: emptyEl("Could not read the tree state."), info: [] };
+  }
+  if (!root) return { node: emptyEl("Tree is empty."), info: [] };
+
+  var order = 0;
+  var maxDepth = 0;
+
+  (function walk(node, depth) {
+    if (!node) return;
+    walk(node.left, depth + 1);
+    node.x = order++;
+    node.depth = depth;
+    if (depth > maxDepth) maxDepth = depth;
+    walk(node.right, depth + 1);
+  })(root, 0);
+
+  var cw = 76;
+  var ch = 96;
+  var px = 46;
+  var py = 48;
+  var w = order * cw + px * 2;
+  var h = (maxDepth + 1) * ch + py * 2;
+  var s = makeSvg(w, h);
+
+  (function edges(node) {
+    if (!node) return;
+    [node.left, node.right].forEach(function (child) {
+      if (!child) return;
+      s.appendChild(svgEl("line", {
+        x1: px + node.x * cw, y1: py + node.depth * ch,
+        x2: px + child.x * cw, y2: py + child.depth * ch,
+        "class": "edge"
+      }));
+    });
+    edges(node.left);
+    edges(node.right);
+  })(root);
+
+  (function nodes(node) {
+    if (!node) return;
+    var cx = px + node.x * cw;
+    var cy = py + node.depth * ch;
+    var cls = "node-ring" + (node.hot ? " node-hot" : "");
+    s.appendChild(svgEl("circle", { cx: cx, cy: cy, r: 23, "class": cls }));
+    s.appendChild(svgEl("text", { x: cx, y: cy, "class": "node-label" }, String(node.value)));
+    nodes(node.left);
+    nodes(node.right);
+  })(root);
+
+  return { node: s, info: [] };
+}
+
+/* ------------------------------- lists ------------------------------ */
+
+function drawList(state, doubly) {
+  var items = parseList(state);
+  if (!items.length) {
+    return {
+      node: emptyEl(doubly ? "Doubly linked list is empty." : "Singly linked list is empty."),
+      info: []
+    };
+  }
+
+  var bw = 96;
+  var bh = 52;
+  var gap = 66;
+  var px = 100;
+  var top = 62;
+  var nullGap = 74;
+  var w = px * 2 + items.length * bw + (items.length - 1) * gap + nullGap;
+  var h = 205;
+  var s = makeSvg(w, h);
+  var my = top + bh / 2;
+  var lastRight = px + items.length * bw + (items.length - 1) * gap;
+
+  addArrow(s, "af", "#94a3b8");
+  if (doubly) addArrow(s, "ab", "#94a3b8");
+
+  s.appendChild(svgEl("text", { x: px, y: top - 20, "class": "node-sub", style: "text-anchor:start" }, "head"));
+
+  items.forEach(function (item, i) {
+    var x = px + i * (bw + gap);
+    var cls = "slot" + (item.hot ? " slot-hot" : "");
+    s.appendChild(svgEl("rect", { x: x, y: top, width: bw, height: bh, rx: 10, "class": cls }));
+    s.appendChild(svgEl("text", { x: x + bw / 2, y: top + bh / 2, "class": "box-label" }, String(item.value)));
+  });
+
+  var laneF = doubly ? my - 10 : my;
+  var laneB = my + 10;
+
+  for (var i = 0; i < items.length - 1; i++) {
+    var left = px + i * (bw + gap);
+    var nextLeft = left + bw + gap;
+    s.appendChild(svgEl("line", {
+      x1: left + bw + 3, y1: laneF, x2: nextLeft - 5, y2: laneF,
+      "class": "arrow", "marker-end": "url(#af)"
+    }));
+    if (doubly) {
+      s.appendChild(svgEl("line", {
+        x1: nextLeft - 3, y1: laneB, x2: left + bw + 5, y2: laneB,
+        "class": "arrow", "marker-end": "url(#ab)"
+      }));
+    }
+  }
+
+  s.appendChild(svgEl("line", {
+    x1: lastRight + 3, y1: laneF, x2: lastRight + 38, y2: laneF,
+    "class": "arrow", "marker-end": "url(#af)"
+  }));
+  s.appendChild(svgEl("text", {
+    x: lastRight + 46, y: laneF + 4,
+    "class": "node-sub", style: "text-anchor:start"
+  }, "NULL"));
+
+  if (doubly) {
+    s.appendChild(svgEl("line", {
+      x1: px - 3, y1: laneB, x2: px - 38, y2: laneB,
+      "class": "arrow", "marker-end": "url(#ab)"
+    }));
+    s.appendChild(svgEl("text", {
+      x: px - 46, y: laneB + 4,
+      "class": "node-sub", style: "text-anchor:end"
+    }, "NULL"));
+  }
+
+  return {
+    node: s,
+    info: [
+      ["nodes", String(items.length)],
+      ["links", doubly ? "prev and next" : "next only"]
+    ]
+  };
+}
+
+/* ------------------------------- stack ------------------------------ */
+
+function drawStack(state) {
+  var values = nums(state);
+  var cap = 10;
+  var bw = 150;
+  var bh = 38;
+  var gap = 6;
+  var px = 118;
+  var py = 54;
+  var w = 400;
+  var h = py * 2 + cap * (bh + gap);
+  var s = makeSvg(w, h);
+
+  addArrow(s, "sa", "#4f46e5");
+
+  for (var i = 0; i < cap; i++) {
+    var row = cap - 1 - i;
+    var y = py + row * (bh + gap);
+    var filled = i < values.length;
+    s.appendChild(svgEl("rect", {
+      x: px, y: y, width: bw, height: bh, rx: 8,
+      "class": "slot" + (filled ? " slot-on" : "")
+    }));
+    s.appendChild(svgEl("text", {
+      x: px - 14, y: y + bh / 2,
+      "class": "node-sub", style: "text-anchor:end"
+    }, String(i)));
+    if (filled) {
+      s.appendChild(svgEl("text", {
+        x: px + bw / 2, y: y + bh / 2, "class": "box-label"
+      }, String(values[i])));
+    }
+  }
+
+  s.appendChild(svgEl("text", {
+    x: px + bw, y: py - 16, "class": "node-sub", style: "text-anchor:end"
+  }, "capacity 10"));
+
+  var top = values.length - 1;
+  if (top >= 0) {
+    var topRow = cap - 1 - top;
+    var topY = py + topRow * (bh + gap) + bh / 2;
+    s.appendChild(svgEl("text", {
+      x: px - 52, y: topY, "class": "marker", fill: "#4f46e5"
+    }, "top"));
+    s.appendChild(svgEl("line", {
+      x1: px - 44, y1: topY, x2: px - 8, y2: topY,
+      "class": "arrow", stroke: "#4f46e5", "marker-end": "url(#sa)"
+    }));
+  } else {
+    s.appendChild(svgEl("text", {
+      x: px + bw / 2, y: py + bh + 26, "class": "node-sub"
+    }, "top = -1 (empty)"));
+  }
+
+  return { node: s, info: [["top", String(top)], ["items", String(values.length)]] };
+}
+
+/* ------------------------------- queues ----------------------------- */
+
+function drawQueue(state) {
+  var q = parseQueue(state);
+  var n = q.slots.length || 10;
+  var sw = 56;
+  var sh = 54;
+  var gap = 10;
+  var px = 46;
+  var py = 72;
+  var w = px * 2 + n * sw + (n - 1) * gap;
+  var h = 238;
+  var s = makeSvg(w, h);
+  var f = q.f;
+  var r = q.r;
+
+  addArrow(s, "qa", "#10b981");
+
+  for (var i = 0; i < n; i++) {
+    var x = px + i * (sw + gap);
+    var on = f !== -1 && i >= f && i <= r;
+    var cls = "slot" + (on ? " slot-on" : "");
+    if (f !== -1 && i === f) cls += " slot-front";
+    if (r !== -1 && i === r) cls += " slot-rear";
+    s.appendChild(svgEl("rect", { x: x, y: py, width: sw, height: sh, rx: 9, "class": cls }));
+    if (on) {
+      s.appendChild(svgEl("text", {
+        x: x + sw / 2, y: py + sh / 2, "class": "box-label"
+      }, String(q.slots[i])));
+    }
+    s.appendChild(svgEl("text", {
+      x: x + sw / 2, y: py + sh + 22, "class": "node-sub"
+    }, String(i)));
+
+    if (f !== -1 && i === f) {
+      s.appendChild(svgEl("text", {
+        x: x + sw / 2 - (f === r ? 16 : 0), y: py - 28,
+        "class": "marker", fill: "#10b981"
+      }, "front"));
+    }
+    if (r !== -1 && i === r) {
+      s.appendChild(svgEl("text", {
+        x: x + sw / 2 + (f === r ? 16 : 0), y: py - 28,
+        "class": "marker", fill: "#f59e0b"
+      }, "rear"));
+    }
+  }
+
+  var count = f === -1 ? 0 : r - f + 1;
+  return {
+    node: s,
+    info: [
+      ["front", String(f)],
+      ["rear", String(r)],
+      ["items", String(count)]
+    ]
+  };
+}
+
+function drawCircular(state) {
+  var q = parseQueue(state);
+  var n = q.slots.length || 10;
+  var f = q.f;
+  var r = q.r;
+  var cx = 360;
+  var cy = 250;
+  var radius = 158;
+  var w = 720;
+  var h = 500;
+  var s = makeSvg(w, h);
+  var pos = [];
+  var i, angle;
+
+  for (i = 0; i < n; i++) {
+    angle = -Math.PI / 2 + i * (2 * Math.PI / n);
+    pos.push([cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)]);
+  }
+
+  function inside(k) {
+    if (f === -1 && r === -1) return false;
+    if (f <= r) return k >= f && k <= r;
+    return k >= f || k <= r;
+  }
+
+  var count = 0;
+  if (f !== -1 || r !== -1) {
+    count = f <= r ? r - f + 1 : n - f + r + 1;
+  }
+
+  for (i = 0; i < n; i++) {
+    var x = pos[i][0];
+    var y = pos[i][1];
+    var bw = 48;
+    var bh = 38;
+    var cls = "slot" + (inside(i) ? " slot-on" : "");
+    if (i === f) cls += " slot-front";
+    if (i === r) cls += " slot-rear";
+
+    s.appendChild(svgEl("rect", {
+      x: x - bw / 2, y: y - bh / 2, width: bw, height: bh, rx: 9, "class": cls
+    }));
+    if (inside(i)) {
+      s.appendChild(svgEl("text", { x: x, y: y, "class": "box-label" }, String(q.slots[i])));
+    }
+    s.appendChild(svgEl("text", {
+      x: x, y: y + bh / 2 + 16, "class": "node-sub"
+    }, String(i)));
+    if (i === f) {
+      s.appendChild(svgEl("text", {
+        x: x, y: y - bh / 2 - 8, "class": "marker", fill: "#10b981"
+      }, "front"));
+    }
+    if (i === r) {
+      s.appendChild(svgEl("text", {
+        x: x, y: y + bh / 2 + 32, "class": "marker", fill: "#f59e0b"
+      }, "rear"));
+    }
+  }
+
+  s.appendChild(svgEl("text", {
+    x: cx, y: cy - 18, "class": "box-label",
+    style: "font-size:13px;font-weight:600;fill:#64748b"
+  }, "front = " + f));
+  s.appendChild(svgEl("text", {
+    x: cx, y: cy + 10, "class": "box-label",
+    style: "font-size:13px;font-weight:600;fill:#64748b"
+  }, "rear = " + r));
+  s.appendChild(svgEl("text", {
+    x: cx, y: cy + 38, "class": "node-sub"
+  }, count === 0 ? "empty" : (count === n - 1 ? "full (one slot kept free)" : count + " items")));
+
+  return {
+    node: s,
+    info: [
+      ["front", String(f)],
+      ["rear", String(r)],
+      ["items", String(count)]
+    ]
+  };
+}
+
+/* ------------------------------- graph ------------------------------ */
+
+function drawGraph(state) {
+  var g = parseGraph(state);
+  var n = g.n;
+  if (!n) return { node: emptyEl("Graph is empty."), info: [] };
+
+  var cx = 330;
+  var cy = 235;
+  var radius = 158;
+  var w = 660;
+  var h = 480;
+  var s = makeSvg(w, h);
+  var pos = [];
+  var i, j;
+
+  for (i = 0; i < n; i++) {
+    var angle = -Math.PI / 2 + i * (2 * Math.PI / n);
+    pos.push([cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)]);
+  }
+
+  for (i = 0; i < n; i++) {
+    for (j = i + 1; j < n; j++) {
+      if (g.matrix[i] && g.matrix[i][j]) {
+        s.appendChild(svgEl("line", {
+          x1: pos[i][0], y1: pos[i][1],
+          x2: pos[j][0], y2: pos[j][1],
+          "class": "edge"
+        }));
+      }
+    }
+  }
+
+  for (i = 0; i < n; i++) {
+    var cls = "node-ring";
+    if (g.visited[i]) cls = "node-visited";
+    if (i === g.cur) cls = "node-hot";
+    s.appendChild(svgEl("circle", {
+      cx: pos[i][0], cy: pos[i][1], r: 24, "class": cls
+    }));
+    s.appendChild(svgEl("text", {
+      x: pos[i][0], y: pos[i][1], "class": "node-label"
+    }, String(i)));
+  }
+
+  var info = [["order", g.path.length ? g.path.join(" \u2192 ") : "none yet"]];
+  if (g.auxType === "Q") {
+    info.push(["queue", g.aux.length ? g.aux.join(", ") : "empty"]);
+  } else if (g.auxType === "S") {
+    info.push(["stack", g.aux.length ? g.aux.join(", ") : "empty"]);
+  }
+  info.push(["current", g.cur >= 0 ? String(g.cur) : "none"]);
+
+  return { node: s, info: info };
+}
+
+/* ----------------------------- rendering ---------------------------- */
+
+function drawStep(m, state) {
+  switch (m) {
+    case "bst": return drawBST(state);
+    case "stack": return drawStack(state);
+    case "queue": return drawQueue(state);
+    case "circular": return drawCircular(state);
+    case "sll": return drawList(state, false);
+    case "dll": return drawList(state, true);
+    case "graph": return drawGraph(state);
+    default: return { node: emptyEl("Unknown structure."), info: [] };
+  }
+}
+
+function render() {
+  var step = steps[idx];
+
+  modeBadge.textContent = MODE_NAMES[mode] || mode || "waiting";
+  titleEl.textContent = title || "Waiting for an operation";
+  counterEl.textContent = steps.length ? (idx + 1) + " / " + steps.length : "0 / 0";
+  barEl.style.width = steps.length ? (((idx + 1) / steps.length) * 100) + "%" : "0%";
+  msgEl.textContent = step ? step.msg : "Nothing to show yet.";
+
+  stage.textContent = "";
+
+  if (!step) {
+    stage.appendChild(emptyEl("No steps to draw yet."));
+    return;
+  }
+
+  var out;
+  try {
+    out = drawStep(mode, step.state);
+  } catch (e) {
+    stage.appendChild(emptyEl("Could not draw this step."));
+    return;
+  }
+
+  stage.appendChild(out.node);
+
+  if (out.info && out.info.length) {
+    var info = document.createElement("div");
+    info.className = "info";
+    out.info.forEach(function (pair) {
+      var chip = document.createElement("span");
+      chip.className = "chip";
+      var b = document.createElement("b");
+      b.textContent = pair[0] + ": ";
+      chip.appendChild(b);
+      chip.appendChild(document.createTextNode(pair[1]));
+      info.appendChild(chip);
+    });
+    stage.appendChild(info);
+  }
+}
+
+/* ----------------------------- playback ----------------------------- */
+
+function updatePlayButton() {
+  playBtn.innerHTML = playing ? "&#10074;&#10074; Pause" : "&#9654; Play";
+  playBtn.classList.toggle("primary", !playing);
+}
+
+function stopClock() {
+  if (timer !== null) {
+    clearInterval(timer);
+    timer = null;
+  }
+  playing = false;
+  updatePlayButton();
+}
+
+function play(fromStart) {
+  if (!steps.length) return;
+
+  if (fromStart) {
+    idx = 0;
+    render();
+  } else if (idx >= steps.length - 1) {
+    idx = 0;
+    render();
+  }
+
+  if (steps.length < 2) {
+    stopClock();
+    return;
+  }
+
+  if (timer !== null) clearInterval(timer);
+  playing = true;
+  updatePlayButton();
+
+  timer = setInterval(function () {
+    if (idx < steps.length - 1) {
+      idx++;
+      render();
+    } else {
+      stopClock();
+    }
+  }, STEP_MS);
+}
+
+function stepBy(delta) {
+  stopClock();
+  if (!steps.length) return;
+  idx += delta;
+  if (idx < 0) idx = 0;
+  if (idx > steps.length - 1) idx = steps.length - 1;
+  render();
+}
+
+function loadTrace(data) {
+  everLoaded = true;
+  stopClock();
+  steps = Array.isArray(data.steps) ? data.steps : [];
+  mode = data.mode || "";
+  title = data.title || "Operation";
+  idx = 0;
+  render();
+  if (steps.length > 1) play(false);
+}
+
+function setStatus(ok) {
+  if (ok) {
+    dotEl.className = "dot ok";
+    statusEl.textContent = everLoaded ? "trace.json connected" : "connected, waiting for an operation";
+  } else {
+    dotEl.className = "dot wait";
+    statusEl.textContent = "looking for trace.json";
+  }
+}
+
+async function poll() {
+  var ok = false;
+  try {
+    var res = await fetch("trace.json?t=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error("no trace file");
+    var raw = await res.text();
+    if (raw && raw !== lastRaw) {
+      var data = JSON.parse(raw);
+      lastRaw = raw;
+      loadTrace(data);
+    }
+    ok = true;
+  } catch (e) {
+    ok = false;
+  }
+  setStatus(ok);
+}
+
+document.getElementById("restart").addEventListener("click", function () {
+  stopClock();
+  if (steps.length) {
+    idx = 0;
+    render();
+  }
+});
+document.getElementById("prev").addEventListener("click", function () { stepBy(-1); });
+document.getElementById("next").addEventListener("click", function () { stepBy(1); });
+document.getElementById("cont").addEventListener("click", function () { play(false); });
+playBtn.addEventListener("click", function () {
+  if (playing) stopClock();
+  else play(true);
+});
+
+document.addEventListener("keydown", function (e) {
+  if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  if (e.key === "ArrowLeft") {
+    e.preventDefault();
+    stepBy(-1);
+  } else if (e.key === "ArrowRight") {
+    e.preventDefault();
+    stepBy(1);
+  } else if (e.key === " ") {
+    e.preventDefault();
+    if (playing) stopClock();
+    else play(true);
+  }
+});
+
+updatePlayButton();
+poll();
+setInterval(poll, 800);
+</script>
+</body>
+</html>

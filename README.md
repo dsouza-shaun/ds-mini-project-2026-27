@@ -6,6 +6,8 @@
 A menu-driven C console application for exploring common data structures and watching their operations happen step by step. The visualizer pairs a text-based view of the current structure with a debugger panel showing the active function, call stack, local values, highlighted source line, and operation status.
 
 > **Looking for the simpler version?** A beginner-friendly rewrite is available in [`basic/`](basic/). It uses only `stdio.h`, `stdlib.h`, `conio.h` and `windows.h`, has no ANSI colors, and keeps the same step / auto-play debugger behavior with plain text drawing. See [`basic/README.md`](basic/README.md) for build and run instructions.
+>
+> **Want the browser version?** [`web/`](web/) runs the structures in one C file and draws every step in a web page. See [`web/README.md`](web/README.md) for build and run instructions.
 
 ## Features
 
